@@ -633,7 +633,7 @@ async function loadToday() {
   const p  = { action:'summary', period:'today',
                bu:_fv('f-bu-t'), brand:_fv('f-brand-t'), inv:_fv('f-inv-t') };
   try {
-    el.innerHTML = _loadingHTML('Loading today's data...');
+    el.innerHTML = _loadingHTML("Loading today's data...");
     const data = await apiFetch(p);
     document.getElementById('today-label').textContent =
       data.generatedAt ? data.generatedAt.split(' ').slice(0,1).join(' ') : 'today';
