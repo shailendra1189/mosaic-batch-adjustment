@@ -7,1130 +7,971 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
-/* ── Reset & base ── */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --c-bg:#F8FAF9;--c-surface:#FFFFFF;--c-border:#E5EBE8;--c-border-md:#C8D6CF;
-  --c-text:#1A2E25;--c-text-2:#4A6358;--c-text-3:#7A9589;
-  --c-teal:#1D9E75;--c-teal-lt:#E1F5EE;--c-teal-dk:#0F6E56;
-  --c-red:#E24B4A;--c-red-lt:#FFEBEE;--c-blue:#378ADD;--c-blue-lt:#E6F1FB;
-  --c-amber:#BA7517;--c-amber-lt:#FAEEDA;--c-purple:#7F77DD;--c-purple-lt:#EEEDFE;
-  --c-green-lt:#EAF3DE;--c-green:#639922;
-  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --bg:#F7FAF9;--surf:#fff;--bdr:#E2EAE6;--bdr2:#C0D0C8;
+  --txt:#192C22;--txt2:#3E5C4E;--txt3:#7A9589;
+  --teal:#1D9E75;--teal-lt:#DFF5EE;--teal-dk:#0C6844;
+  --red:#D94040;--red-lt:#FDEAEA;
+  --blu:#2D7DD6;--blu-lt:#E5F0FB;
+  --amb:#B8720F;--amb-lt:#FAEDD8;
+  --grn:#4F8A15;--grn-lt:#E8F2D8;
+  --pur:#6A63CC;--pur-lt:#EEECFC;
+  --rad:8px;--rad-lg:12px;
+  --shad:0 1px 4px rgba(0,0,0,.07);
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:14px;color:var(--c-text);background:var(--c-bg);line-height:1.5;min-height:100vh}
-
-/* ── Layout ── */
-.app{max-width:1200px;margin:0 auto;padding:20px 24px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.section{margin-bottom:20px}
-@media(max-width:640px){.two-col{grid-template-columns:1fr}.app{padding:12px 14px}}
-
-/* ── Header ── */
-.app-header{display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:12px;padding-bottom:16px;margin-bottom:4px;
-  border-bottom:1px solid var(--c-border)}
-.brand-row{display:flex;align-items:center;gap:10px}
-.brand-dot{width:32px;height:32px;border-radius:50%;background:var(--c-teal-lt);
-  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.brand-name{font-size:16px;font-weight:600;color:var(--c-text)}
-.brand-sub{font-size:11px;color:var(--c-text-3);margin-top:1px}
-.header-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.hbtn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--radius-md);
-  border:1px solid var(--c-border-md);background:var(--c-surface);font-size:12px;
-  font-weight:500;color:var(--c-text-2);cursor:pointer;text-decoration:none;
-  transition:all .15s;white-space:nowrap}
-.hbtn:hover{border-color:var(--c-teal);color:var(--c-teal);background:var(--c-teal-lt)}
-.hbtn svg{width:14px;height:14px;flex-shrink:0}
-.hbtn-green{border-color:var(--c-teal);color:var(--c-teal);background:var(--c-teal-lt)}
-.hbtn-green:hover{background:#9FE1CB}
-
-/* ── Status bar ── */
-.status-bar{display:flex;align-items:center;gap:10px;font-size:11px;
-  color:var(--c-text-3);padding:8px 0;margin-bottom:4px;flex-wrap:wrap}
-.status-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0}
-.status-dot.live{background:var(--c-teal);box-shadow:0 0 0 3px rgba(29,158,117,.2)}
-.status-dot.error{background:var(--c-red)}
-.status-dot.loading{background:var(--c-amber);animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.last-updated{margin-left:auto;color:var(--c-text-3)}
-
-/* ── Nav tabs ── */
-.nav-tabs{display:flex;gap:0;border-bottom:1px solid var(--c-border);margin-bottom:18px}
-.nav-tab{padding:10px 18px;font-size:12px;font-weight:500;color:var(--c-text-2);
-  border:none;background:transparent;cursor:pointer;
-  border-bottom:2px solid transparent;margin-bottom:-1px;
-  transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.nav-tab:hover{color:var(--c-text)}
-.nav-tab.active{color:var(--c-teal);border-bottom-color:var(--c-teal);font-weight:600}
-.badge-pill{background:var(--c-amber-lt);color:var(--c-amber);font-size:10px;
-  padding:1px 6px;border-radius:10px;font-weight:600;margin-left:2px}
-
-/* ── Tab sections ── */
-.tab-section{display:none}
-.tab-section.active{display:block}
-
-/* ── Section toolbar ── */
-.section-toolbar{display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:10px;margin-bottom:16px}
-.period-toggle{display:flex;background:var(--c-bg);border:1px solid var(--c-border);
-  border-radius:var(--radius-md);padding:3px;gap:2px}
-.period-btn{padding:5px 16px;border-radius:6px;border:none;background:transparent;
-  font-size:12px;font-weight:500;cursor:pointer;color:var(--c-text-2);transition:all .15s}
-.period-btn.active{background:var(--c-surface);color:var(--c-teal);font-weight:600;
-  box-shadow:var(--shadow);border:1px solid var(--c-border)}
-.filters-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.filters-row select{font-size:12px;padding:5px 9px;border-radius:var(--radius-md);
-  border:1px solid var(--c-border-md);background:var(--c-surface);color:var(--c-text);
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  font-size:13px;color:var(--txt);background:var(--bg);line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 22px}
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:12px;padding-bottom:16px;border-bottom:1px solid var(--bdr);margin-bottom:8px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-ico{width:34px;height:34px;border-radius:50%;background:var(--teal-lt);
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.brand-name{font-size:15px;font-weight:600;color:var(--txt)}
+.brand-sub{font-size:11px;color:var(--txt3);margin-top:1px}
+.hdr-btns{display:flex;gap:7px;flex-wrap:wrap}
+.hbtn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--rad);
+  border:1px solid var(--bdr2);background:var(--surf);font-size:11px;font-weight:500;
+  color:var(--txt2);cursor:pointer;text-decoration:none;transition:.15s;white-space:nowrap}
+.hbtn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-lt)}
+.hbtn-primary{border-color:var(--teal);color:var(--teal);background:var(--teal-lt)}
+.hbtn-primary:hover{background:#9FDECA}
+/* Status bar */
+.sbar{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--txt3);
+  padding:7px 0;flex-wrap:wrap}
+.sdot{width:7px;height:7px;border-radius:50%;background:#bbb;flex-shrink:0}
+.sdot.live{background:var(--teal);box-shadow:0 0 0 3px rgba(29,158,117,.2)}
+.sdot.err{background:var(--red)}
+.sdot.loading{background:var(--amb);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.sbar-right{margin-left:auto;font-size:10px;color:var(--txt3)}
+.ebanner{display:none;background:var(--red-lt);border:1px solid #FBBDBD;
+  border-radius:var(--rad);padding:10px 14px;font-size:12px;color:#8C1F1F;margin-bottom:12px}
+/* Nav tabs */
+.nav{display:flex;border-bottom:1px solid var(--bdr);margin-bottom:18px;gap:0}
+.ntab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--txt2);
+  border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:.15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.ntab:hover{color:var(--txt)}
+.ntab.on{color:var(--teal);border-bottom-color:var(--teal);font-weight:600}
+.nbadge{background:var(--amb-lt);color:var(--amb);font-size:10px;padding:1px 6px;
+  border-radius:10px;font-weight:600}
+/* Tab panels */
+.tpanel{display:none}.tpanel.on{display:block}
+/* Toolbar */
+.tbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:10px;margin-bottom:16px}
+.peri-toggle{display:flex;background:var(--bg);border:1px solid var(--bdr);
+  border-radius:var(--rad);padding:3px;gap:2px}
+.pbtn{padding:4px 14px;border-radius:6px;border:none;background:transparent;
+  font-size:11px;font-weight:500;cursor:pointer;color:var(--txt2);transition:.15s}
+.pbtn.on{background:var(--surf);color:var(--teal);font-weight:600;
+  box-shadow:var(--shad);border:1px solid var(--bdr)}
+.frow{display:flex;gap:7px;flex-wrap:wrap}
+.frow select{font-size:11px;padding:4px 8px;border-radius:var(--rad);
+  border:1px solid var(--bdr2);background:var(--surf);color:var(--txt);
   cursor:pointer;outline:none}
-.filters-row select:focus{border-color:var(--c-teal)}
-
-/* ── Divider labels ── */
-.divider-label{font-size:10px;font-weight:600;color:var(--c-text-3);
-  text-transform:uppercase;letter-spacing:.7px;margin:16px 0 10px;
-  display:flex;align-items:center;gap:8px}
-.divider-label::after{content:'';flex:1;height:1px;background:var(--c-border)}
-
-/* ── Metric cards ── */
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-.metric-card{background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:var(--radius-lg);padding:14px 16px;box-shadow:var(--shadow)}
-.m-label{font-size:10px;color:var(--c-text-3);text-transform:uppercase;
-  letter-spacing:.5px;margin-bottom:6px;font-weight:500}
-.m-val{font-size:22px;font-weight:600;line-height:1.1;letter-spacing:-.3px}
-.m-sub{font-size:10px;color:var(--c-text-3);margin-top:3px}
-.cv-teal{color:var(--c-teal)}.cv-red{color:var(--c-red)}.cv-blue{color:var(--c-blue)}
-.cv-amber{color:var(--c-amber)}.cv-purple{color:var(--c-purple)}
-
-/* ── Chart cards ── */
-.chart-card{background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow)}
-.chart-card h3{font-size:12px;font-weight:600;color:var(--c-text-2);margin-bottom:2px}
-.chart-sub{font-size:10px;color:var(--c-text-3);margin-bottom:10px}
-.chart-wrap{position:relative;width:100%}
-.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
-.legend span{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--c-text-2)}
-.leg-sq{width:8px;height:8px;border-radius:2px;display:inline-block;flex-shrink:0}
-
-/* ── BU impact bars ── */
-.bu-card{background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow)}
-.bu-card h3{font-size:12px;font-weight:600;color:var(--c-text-2);margin-bottom:2px}
-.bu-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.bu-row:last-child{margin-bottom:0}
-.bu-left{width:96px;flex-shrink:0}
-.bu-name{font-size:12px;font-weight:500;color:var(--c-text)}
-.bu-fac{font-size:10px;color:var(--c-text-3);margin-top:1px}
-.bu-bar-wrap{flex:1;background:var(--c-bg);border-radius:4px;height:10px;overflow:hidden;
-  border:1px solid var(--c-border)}
-.bu-bar{height:100%;border-radius:4px;transition:width .5s ease}
-.bu-right{text-align:right;flex-shrink:0;width:88px}
-.bu-val{font-size:12px;font-weight:600}
-.bu-units{font-size:10px;color:var(--c-text-3);margin-top:1px}
-
-/* ── Table ── */
-.table-card{background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
-.table-card-header{padding:14px 16px;border-bottom:1px solid var(--c-border)}
-.table-card-header h3{font-size:12px;font-weight:600;color:var(--c-text-2);margin-bottom:1px}
-.table-scroll{overflow-x:auto}
+.frow select:focus{border-color:var(--teal)}
+/* Section label */
+.slbl{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;
+  letter-spacing:.7px;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.slbl::after{content:'';flex:1;height:1px;background:var(--bdr)}
+/* Metrics */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.mcard{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad-lg);
+  padding:13px 15px;box-shadow:var(--shad)}
+.ml{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;
+  margin-bottom:5px;font-weight:500}
+.mv{font-size:21px;font-weight:600;line-height:1.1;letter-spacing:-.3px}
+.ms{font-size:10px;color:var(--txt3);margin-top:3px}
+.ct{color:var(--teal)}.cr{color:var(--red)}.cb{color:var(--blu)}
+.ca{color:var(--amb)}.cp{color:var(--pur)}.cg{color:var(--grn)}
+/* Chart cards */
+.ccrd{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad-lg);
+  padding:15px;box-shadow:var(--shad)}
+.ccrd h3{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:2px}
+.csub{font-size:10px;color:var(--txt3);margin-bottom:10px}
+.cwrap{position:relative;width:100%}
+.cleg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:9px}
+.cleg span{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--txt2)}
+.lsq{width:8px;height:8px;border-radius:2px;display:inline-block;flex-shrink:0}
+/* Two column */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:620px){.two{grid-template-columns:1fr}.wrap{padding:12px 13px}}
+/* BU bars */
+.brow{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.brow:last-child{margin-bottom:0}
+.bleft{width:94px;flex-shrink:0}
+.bname{font-size:12px;font-weight:500;color:var(--txt)}
+.bfac{font-size:10px;color:var(--txt3);margin-top:1px}
+.bbwrap{flex:1;background:var(--bg);border-radius:4px;height:9px;overflow:hidden;
+  border:1px solid var(--bdr)}
+.bbfill{height:100%;border-radius:3px;transition:width .5s}
+.bright{text-align:right;flex-shrink:0;width:80px}
+.bval{font-size:12px;font-weight:600}
+.bunits{font-size:10px;color:var(--txt3);margin-top:1px}
+/* Table */
+.tcrd{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad-lg);
+  overflow:hidden;box-shadow:var(--shad);margin-bottom:14px}
+.tcrdhdr{padding:12px 15px;border-bottom:1px solid var(--bdr)}
+.tcrdhdr h3{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:1px}
+.tscroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:11px}
-thead th{text-align:left;font-weight:600;color:var(--c-text-3);
-  padding:7px 10px;border-bottom:1px solid var(--c-border);white-space:nowrap;
-  font-size:10px;text-transform:uppercase;letter-spacing:.4px;background:var(--c-bg)}
-tbody td{padding:7px 10px;border-bottom:1px solid var(--c-border);color:var(--c-text)}
+thead th{text-align:left;font-weight:600;color:var(--txt3);padding:6px 9px;
+  border-bottom:1px solid var(--bdr);white-space:nowrap;font-size:10px;
+  text-transform:uppercase;letter-spacing:.4px;background:var(--bg)}
+tbody td{padding:6px 9px;border-bottom:1px solid var(--bdr);color:var(--txt)}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:#F4FAF7}
+tbody tr:hover td{background:#F0FAF5}
 .nr{text-align:right}
-.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
-.p-add{background:var(--c-green-lt);color:var(--c-green)}
-.p-rem{background:var(--c-red-lt);color:var(--c-red)}
-.p-pos{color:var(--c-green);font-weight:600}.p-neg{color:var(--c-red);font-weight:600}
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
-.b-b2b{background:var(--c-blue-lt);color:#185FA5}
-.b-b2c{background:var(--c-teal-lt);color:var(--c-teal-dk)}
-.b-ds{background:var(--c-amber-lt);color:var(--c-amber)}
-.b-sw{background:var(--c-purple-lt);color:var(--c-purple)}
-.b-unk{background:#F1EFE8;color:#5F5E5A}
-
-/* ── Prohibited cards ── */
-.proh-card{background:var(--c-surface);border:1px solid #EF9F27;
-  border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
-.proh-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;
-  padding-bottom:10px;border-bottom:1px solid var(--c-amber-lt)}
-.proh-title{font-size:13px;font-weight:600;color:#633806}
-.proh-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.proh-field-label{font-size:10px;color:var(--c-text-3);text-transform:uppercase;
-  letter-spacing:.3px;margin-bottom:2px}
-.proh-field-val{font-size:12px;font-weight:500;color:var(--c-text)}
-.proh-remarks{margin-top:12px;padding:8px 12px;background:var(--c-amber-lt);
-  border-radius:var(--radius-sm);font-size:11px;color:#854F0B;line-height:1.6}
-
-/* ── Remarks ── */
-.remarks-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.add-remark-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;
-  border-radius:var(--radius-md);border:1px solid var(--c-teal);
-  background:var(--c-teal-lt);color:var(--c-teal-dk);font-size:12px;font-weight:600;cursor:pointer}
-.add-remark-btn:hover{background:#9FE1CB}
-.remark-form{background:var(--c-bg);border:1px solid var(--c-border);
-  border-radius:var(--radius-lg);padding:18px;margin-bottom:16px}
-.form-row{margin-bottom:12px}
-.form-label{font-size:11px;font-weight:600;color:var(--c-text-2);margin-bottom:5px;display:block}
-.form-label .req{color:var(--c-red)}
-.form-input{width:100%;padding:7px 10px;border-radius:var(--radius-md);
-  border:1px solid var(--c-border-md);background:var(--c-surface);color:var(--c-text);
-  font-size:12px;font-family:inherit;outline:none}
-.form-input:focus{border-color:var(--c-teal);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
-textarea.form-input{resize:vertical;min-height:72px}
-.tag-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.tag-chip{padding:4px 10px;border-radius:20px;font-size:11px;border:1px solid var(--c-border-md);
-  background:var(--c-surface);cursor:pointer;color:var(--c-text-2);
-  transition:all .12s;user-select:none}
-.tag-chip.selected{background:var(--c-teal-lt);border-color:var(--c-teal);
-  color:var(--c-teal-dk);font-weight:600}
-.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
-.btn-cancel{padding:6px 14px;border-radius:var(--radius-md);border:1px solid var(--c-border-md);
-  background:transparent;font-size:12px;cursor:pointer;color:var(--c-text-2)}
-.btn-save{padding:6px 16px;border-radius:var(--radius-md);border:none;
-  background:var(--c-teal);color:#fff;font-size:12px;font-weight:600;cursor:pointer}
-.btn-save:hover{background:var(--c-teal-dk)}
-.remark-list-card{background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
-.remark-list-header{display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;border-bottom:1px solid var(--c-border);font-size:11px;
-  font-weight:600;color:var(--c-text-2);background:var(--c-bg)}
-.remark-item{padding:12px 14px;border-bottom:1px solid var(--c-border);
-  display:flex;align-items:flex-start;gap:10px}
-.remark-item:last-child{border-bottom:none}
-.remark-avatar{width:30px;height:30px;border-radius:50%;background:var(--c-teal-lt);
+.pill{display:inline-block;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:600}
+.padd{background:var(--grn-lt);color:var(--grn)}.prem{background:var(--red-lt);color:var(--red)}
+.ppos{color:var(--grn);font-weight:600}.pneg{color:var(--red);font-weight:600}
+.bdg{display:inline-block;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:500}
+.b-sw{background:var(--pur-lt);color:var(--pur)}
+.b-ds{background:var(--amb-lt);color:var(--amb)}
+.b-b2c{background:var(--teal-lt);color:var(--teal-dk)}
+.b-b2b{background:var(--blu-lt);color:var(--blu)}
+.b-unk{background:#F0EEE6;color:#555}
+/* Remarks */
+.rmkhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.addrmk{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--rad);
+  border:1px solid var(--teal);background:var(--teal-lt);color:var(--teal-dk);
+  font-size:11px;font-weight:600;cursor:pointer}
+.addrmk:hover{background:#9FDECA}
+.rmkform{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rad-lg);
+  padding:17px;margin-bottom:14px;display:none}
+.fgrp{margin-bottom:11px}
+.flbl{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:4px;display:block}
+.flbl .req{color:var(--red)}
+.finp{width:100%;padding:6px 9px;border-radius:var(--rad);border:1px solid var(--bdr2);
+  background:var(--surf);color:var(--txt);font-size:12px;font-family:inherit;outline:none}
+.finp:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+textarea.finp{resize:vertical;min-height:68px}
+.tagrow{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.tchip{padding:3px 9px;border-radius:20px;font-size:11px;border:1px solid var(--bdr2);
+  background:var(--surf);cursor:pointer;color:var(--txt2);transition:.12s;user-select:none}
+.tchip.on{background:var(--teal-lt);border-color:var(--teal);color:var(--teal-dk);font-weight:600}
+.factions{display:flex;gap:7px;justify-content:flex-end;margin-top:4px}
+.bcancel{padding:5px 12px;border-radius:var(--rad);border:1px solid var(--bdr2);
+  background:transparent;font-size:12px;cursor:pointer;color:var(--txt2)}
+.bsave{padding:5px 15px;border-radius:var(--rad);border:none;background:var(--teal);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.bsave:hover{background:var(--teal-dk)}
+.rlist{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad-lg);
+  overflow:hidden;box-shadow:var(--shad)}
+.rlhdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;
+  border-bottom:1px solid var(--bdr);font-size:11px;font-weight:600;color:var(--txt2);
+  background:var(--bg)}
+.ritem{padding:11px 13px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:flex-start;gap:9px}
+.ritem:last-child{border-bottom:none}
+.ravatar{width:29px;height:29px;border-radius:50%;background:var(--teal-lt);
   display:flex;align-items:center;justify-content:center;font-size:11px;
-  font-weight:700;color:var(--c-teal-dk);flex-shrink:0}
-.remark-meta{font-size:10px;color:var(--c-text-3);margin-bottom:4px;
-  display:flex;gap:8px;flex-wrap:wrap}
-.remark-text{font-size:12px;color:var(--c-text);line-height:1.55}
-.remark-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
-.remark-tag{padding:1px 7px;border-radius:8px;font-size:10px;
-  background:var(--c-bg);color:var(--c-text-2);border:1px solid var(--c-border)}
-
-/* ── Loading / empty states ── */
-.loading-state{display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:10px;padding:48px 20px;color:var(--c-text-3);font-size:13px}
-.spinner{width:28px;height:28px;border:2px solid var(--c-border);
-  border-top-color:var(--c-teal);border-radius:50%;animation:spin .8s linear infinite}
+  font-weight:700;color:var(--teal-dk);flex-shrink:0}
+.rmeta{font-size:10px;color:var(--txt3);margin-bottom:3px;
+  display:flex;gap:7px;flex-wrap:wrap}
+.rtxt{font-size:12px;color:var(--txt);line-height:1.55}
+.rtags{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
+.rtag{padding:1px 6px;border-radius:8px;font-size:10px;
+  background:var(--bg);color:var(--txt2);border:1px solid var(--bdr)}
+/* Prohibited */
+.pcrd{background:var(--surf);border:1px solid #EEA020;border-radius:var(--rad-lg);
+  padding:15px;margin-bottom:13px;box-shadow:var(--shad)}
+.phdr2{display:flex;align-items:center;gap:7px;margin-bottom:11px;padding-bottom:9px;
+  border-bottom:1px solid var(--amb-lt)}
+.ptitle{font-size:12px;font-weight:600;color:#5E3503}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px}
+.pfl{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.pfv{font-size:12px;font-weight:500;color:var(--txt)}
+.prmk{margin-top:11px;padding:7px 11px;background:var(--amb-lt);border-radius:6px;
+  font-size:11px;color:#7A4100;line-height:1.6}
+/* States */
+.loading{display:flex;align-items:center;justify-content:center;flex-direction:column;
+  gap:10px;padding:44px 20px;color:var(--txt3);font-size:12px}
+.spin{width:26px;height:26px;border:2px solid var(--bdr);border-top-color:var(--teal);
+  border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.empty-state{text-align:center;padding:36px 20px;color:var(--c-text-3);font-size:12px}
-.error-banner{background:var(--c-red-lt);border:1px solid #FFCDD2;border-radius:var(--radius-md);
-  padding:12px 14px;font-size:12px;color:#C62828;margin-bottom:14px;display:none}
-
-/* ── Run log ── */
-.run-log-row-success td:nth-child(3){color:var(--c-teal);font-weight:600}
-.run-log-row-error   td:nth-child(3){color:var(--c-red);font-weight:600}
-.run-log-row-skipped td:nth-child(3){color:var(--c-amber);font-weight:600}
+.empty{text-align:center;padding:34px 20px;color:var(--txt3);font-size:12px}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="wrap">
 
-<!-- ══ HEADER ══ -->
-<header class="app-header">
-  <div class="brand-row">
-    <div class="brand-dot">🌿</div>
+<!-- Header -->
+<header class="hdr">
+  <div class="brand">
+    <div class="brand-ico">🌿</div>
     <div>
       <div class="brand-name">Mosaic Wellness</div>
-      <div class="brand-sub">Batch Adjustment MIS · Live from Google Sheets</div>
+      <div class="brand-sub">Batch Adjustment MIS &nbsp;·&nbsp; Live from Google Sheets</div>
     </div>
   </div>
-  <div class="header-actions">
+  <div class="hdr-btns">
     <button class="hbtn" onclick="refreshAll(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       Refresh
     </button>
-    <a class="hbtn" id="sheet-link"
-       href="https://docs.google.com/spreadsheets/d/1nuOevWS2m06dbOS9BWavnVyRM2W4_09QDBgomPpqTDY/edit"
-       target="_blank">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    <a class="hbtn" href="https://docs.google.com/spreadsheets/d/1nuOevWS2m06dbOS9BWavnVyRM2W4_09QDBgomPpqTDY/edit" target="_blank">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       View sheet
     </a>
-    <button class="hbtn hbtn-green" onclick="downloadReport()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download
+    <button class="hbtn hbtn-primary" onclick="exportCSV()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export
     </button>
   </div>
 </header>
 
-<!-- Status bar -->
-<div class="status-bar">
-  <span class="status-dot loading" id="status-dot"></span>
-  <span id="status-text">Connecting to live data...</span>
-  <span class="last-updated" id="last-updated"></span>
+<!-- Status -->
+<div class="sbar">
+  <span class="sdot loading" id="sdot"></span>
+  <span id="stxt">Connecting to live data…</span>
+  <span class="sbar-right" id="sright"></span>
 </div>
+<div class="ebanner" id="ebanner"></div>
 
-<!-- Error banner -->
-<div class="error-banner" id="error-banner"></div>
-
-<!-- ══ NAV TABS ══ -->
-<nav class="nav-tabs">
-  <button class="nav-tab active" onclick="switchTab('today',this)">
-    📅 Today's impact
-  </button>
-  <button class="nav-tab" onclick="switchTab('wtd',this)">
-    📈 WTD &amp; MTD
-  </button>
-  <button class="nav-tab" onclick="switchTab('remarks',this)">
-    📋 Remarks tracker
-  </button>
-  <button class="nav-tab" onclick="switchTab('prohibited',this)">
-    ⚠ Prohibited
-    <span class="badge-pill" id="proh-count">—</span>
+<!-- Tabs -->
+<nav class="nav">
+  <button class="ntab on" onclick="switchTab('today',this)">📅 Today's impact</button>
+  <button class="ntab" onclick="switchTab('wtd',this)">📈 WTD &amp; MTD</button>
+  <button class="ntab" onclick="switchTab('remarks',this)">📋 Remarks</button>
+  <button class="ntab" onclick="switchTab('prohibited',this)">
+    ⚠ Prohibited <span class="nbadge" id="pcnt">—</span>
   </button>
 </nav>
 
-<!-- ══ TAB: TODAY ══ -->
-<div class="tab-section active" id="tab-today">
-  <div class="section-toolbar">
-    <div style="font-size:12px;color:var(--c-text-2)">
-      Showing: <strong id="today-label">today</strong> · Add &amp; Remove only
+<!-- TODAY -->
+<div class="tpanel on" id="tab-today">
+  <div class="tbar">
+    <div style="font-size:11px;color:var(--txt2)">
+      Showing: <strong id="tlabel">today</strong> &nbsp;·&nbsp; All adjustment types
     </div>
-    <div class="filters-row">
-      <select id="f-bu-t" onchange="loadTab('today')">
+    <div class="frow">
+      <select id="fbu-t" onchange="loadToday()">
         <option value="all">All business units</option>
-        <option value="3PL B2B">3PL B2B</option>
-        <option value="3PL B2C">3PL B2C</option>
-        <option value="Dark Store">Dark Store</option>
         <option value="Self Warehouse">Self Warehouse</option>
+        <option value="Dark Store">Dark Store</option>
+        <option value="3PL B2C">3PL B2C</option>
+        <option value="3PL B2B">3PL B2B</option>
       </select>
-      <select id="f-brand-t" onchange="loadTab('today')">
+      <select id="fbrand-t" onchange="loadToday()">
         <option value="all">All brands</option>
         <option value="Little Joy">Little Joy</option>
         <option value="Be Bodywise">Be Bodywise</option>
         <option value="Man Matters">Man Matters</option>
-        <option value="OWN">OWN</option>
       </select>
-      <select id="f-inv-t" onchange="loadTab('today')">
+      <select id="finv-t" onchange="loadToday()">
         <option value="all">Good + Bad</option>
         <option value="GOOD_INVENTORY">Good only</option>
         <option value="BAD_INVENTORY">Bad only</option>
       </select>
     </div>
   </div>
-  <div id="today-content"><div class="loading-state"><div class="spinner"></div>Loading today's data...</div></div>
+  <div id="today-content"><div class="loading"><div class="spin"></div>Loading today's data…</div></div>
 </div>
 
-<!-- ══ TAB: WTD & MTD ══ -->
-<div class="tab-section" id="tab-wtd">
-  <div class="section-toolbar">
-    <div class="period-toggle">
-      <button class="period-btn active" id="btn-wtd" onclick="setWTDPeriod('wtd',this)">WTD</button>
-      <button class="period-btn" id="btn-mtd" onclick="setWTDPeriod('mtd',this)">MTD</button>
+<!-- WTD/MTD -->
+<div class="tpanel" id="tab-wtd">
+  <div class="tbar">
+    <div class="peri-toggle">
+      <button class="pbtn on" id="btn-wtd" onclick="setPeriod('wtd',this)">WTD</button>
+      <button class="pbtn" id="btn-mtd" onclick="setPeriod('mtd',this)">MTD</button>
     </div>
-    <div class="filters-row">
-      <select id="f-bu-w" onchange="loadWTD()">
+    <div class="frow">
+      <select id="fbu-w" onchange="loadWTD()">
         <option value="all">All business units</option>
-        <option value="3PL B2B">3PL B2B</option>
-        <option value="3PL B2C">3PL B2C</option>
-        <option value="Dark Store">Dark Store</option>
         <option value="Self Warehouse">Self Warehouse</option>
+        <option value="Dark Store">Dark Store</option>
+        <option value="3PL B2C">3PL B2C</option>
+        <option value="3PL B2B">3PL B2B</option>
       </select>
-      <select id="f-brand-w" onchange="loadWTD()">
+      <select id="fbrand-w" onchange="loadWTD()">
         <option value="all">All brands</option>
         <option value="Little Joy">Little Joy</option>
         <option value="Be Bodywise">Be Bodywise</option>
         <option value="Man Matters">Man Matters</option>
-        <option value="OWN">OWN</option>
       </select>
-      <select id="f-inv-w" onchange="loadWTD()">
+      <select id="finv-w" onchange="loadWTD()">
         <option value="all">Good + Bad</option>
         <option value="GOOD_INVENTORY">Good only</option>
         <option value="BAD_INVENTORY">Bad only</option>
       </select>
     </div>
   </div>
-  <div id="wtd-content"><div class="loading-state"><div class="spinner"></div>Loading...</div></div>
+  <div id="wtd-content"><div class="loading"><div class="spin"></div>Loading…</div></div>
 </div>
 
-<!-- ══ TAB: REMARKS ══ -->
-<div class="tab-section" id="tab-remarks">
-  <div class="remarks-header">
+<!-- REMARKS -->
+<div class="tpanel" id="tab-remarks">
+  <div class="rmkhdr">
     <div>
       <div style="font-size:13px;font-weight:600">Remarks tracker</div>
-      <div style="font-size:11px;color:var(--c-text-3);margin-top:2px">
-        Saved to NI_Remarks in Google Sheets
-      </div>
+      <div style="font-size:11px;color:var(--txt3);margin-top:2px">Saved to NI_Remarks sheet</div>
     </div>
-    <button class="add-remark-btn" onclick="toggleRemarkForm()">+ Add remark</button>
+    <button class="addrmk" onclick="toggleForm()">+ Add remark</button>
   </div>
-  <div class="remark-form" id="remark-form" style="display:none">
-    <div style="font-size:13px;font-weight:600;margin-bottom:14px">New remark</div>
-    <div class="form-row">
-      <label class="form-label">Your name <span class="req">*</span></label>
-      <input class="form-input" id="r-name" type="text" placeholder="e.g. Priya Sharma">
+  <div class="rmkform" id="rmkform">
+    <div style="font-size:12px;font-weight:600;margin-bottom:13px">New remark</div>
+    <div class="fgrp">
+      <label class="flbl">Name <span class="req">*</span></label>
+      <input class="finp" id="rname" type="text" placeholder="e.g. Priya Sharma">
     </div>
-    <div class="form-row">
-      <label class="form-label">Facility</label>
-      <select class="form-input" id="r-facility">
-        <option value="">— select facility —</option>
-        <option>MH_PND_DELHI</option><option>SL Mother Hub</option>
+    <div class="fgrp">
+      <label class="flbl">Facility</label>
+      <select class="finp" id="rfac">
+        <option value="">— select —</option>
+        <option>SL Mother Hub</option><option>MH_PND_DELHI</option>
         <option>MM Beyond NCR</option><option>BW Ahmedabad</option>
         <option>BW Beyond NCR</option><option>MP Beyond NCR</option>
         <option>SL Ambient</option><option>BLR B2B Offline</option>
         <option>BW Kolkata</option><option>LJ Beyond NCR</option><option>Other</option>
       </select>
     </div>
-    <div class="form-row">
-      <label class="form-label">Tags</label>
-      <div class="tag-grid" id="tag-grid">
-        <span class="tag-chip" onclick="toggleTag(this)">Process Gap</span>
-        <span class="tag-chip" onclick="toggleTag(this)">Vendor Issue</span>
-        <span class="tag-chip" onclick="toggleTag(this)">Expiry Risk</span>
-        <span class="tag-chip" onclick="toggleTag(this)">Quality Issue</span>
-        <span class="tag-chip" onclick="toggleTag(this)">Warehouse Ops</span>
-        <span class="tag-chip" onclick="toggleTag(this)">System Triggered</span>
-        <span class="tag-chip" onclick="toggleTag(this)">Cycle Count</span>
-        <span class="tag-chip" onclick="toggleTag(this)">Forced Removal</span>
-        <span class="tag-chip" onclick="toggleTag(this)">Action Taken</span>
+    <div class="fgrp">
+      <label class="flbl">Tags</label>
+      <div class="tagrow" id="tagrow">
+        <span class="tchip" onclick="toggleTag(this)">Process Gap</span>
+        <span class="tchip" onclick="toggleTag(this)">Vendor Issue</span>
+        <span class="tchip" onclick="toggleTag(this)">Expiry Risk</span>
+        <span class="tchip" onclick="toggleTag(this)">Quality Issue</span>
+        <span class="tchip" onclick="toggleTag(this)">Warehouse Ops</span>
+        <span class="tchip" onclick="toggleTag(this)">System Triggered</span>
+        <span class="tchip" onclick="toggleTag(this)">Cycle Count</span>
+        <span class="tchip" onclick="toggleTag(this)">Forced Removal</span>
+        <span class="tchip" onclick="toggleTag(this)">Action Taken</span>
       </div>
     </div>
-    <div class="form-row">
-      <label class="form-label">Remark / action required <span class="req">*</span></label>
-      <textarea class="form-input" id="r-text" placeholder="Describe the adjustment reason or action taken..."></textarea>
+    <div class="fgrp">
+      <label class="flbl">Remark <span class="req">*</span></label>
+      <textarea class="finp" id="rtxt" placeholder="Describe the issue or action taken…"></textarea>
     </div>
-    <div class="form-actions">
-      <button class="btn-cancel" onclick="toggleRemarkForm()">Cancel</button>
-      <button class="btn-save" onclick="submitRemark()">Save remark</button>
+    <div class="factions">
+      <button class="bcancel" onclick="toggleForm()">Cancel</button>
+      <button class="bsave" onclick="submitRemark()">Save remark</button>
     </div>
   </div>
-  <div class="remark-list-card">
-    <div class="remark-list-header">
+  <div class="rlist">
+    <div class="rlhdr">
       <span>Recent remarks</span>
-      <span id="remark-count" style="color:var(--c-text-3);font-weight:400">—</span>
+      <span id="rcnt" style="color:var(--txt3);font-weight:400">—</span>
     </div>
-    <div id="remark-list"><div class="loading-state"><div class="spinner"></div>Loading remarks...</div></div>
+    <div id="rlist-body"><div class="loading"><div class="spin"></div>Loading…</div></div>
   </div>
 </div>
 
-<!-- ══ TAB: PROHIBITED ══ -->
-<div class="tab-section" id="tab-prohibited">
-  <div style="margin-bottom:14px">
+<!-- PROHIBITED -->
+<div class="tpanel" id="tab-prohibited">
+  <div style="margin-bottom:13px">
     <div style="font-size:13px;font-weight:600">Prohibited movements — REPLACE transactions</div>
-    <div style="font-size:11px;color:var(--c-text-3);margin-top:3px">
-      Forceful replacements that bypassed WMS pendency checks. Each case requires investigation.
-      Written to NI_Prohibited in Google Sheets.
+    <div style="font-size:11px;color:var(--txt3);margin-top:3px">
+      Forceful replacements that bypassed WMS pendency. Logged to NI_Prohibited sheet.
     </div>
   </div>
-  <div id="prohibited-content">
-    <div class="loading-state"><div class="spinner"></div>Loading...</div>
-  </div>
+  <div id="proh-content"><div class="loading"><div class="spin"></div>Loading…</div></div>
 </div>
 
-</div><!-- /.app -->
+</div><!-- /wrap -->
 
 <script>
-// ══════════════════════════════════════════════════════════════
-//  CONFIGURATION
-//  ⚠ Replace WEBAPP_URL with your deployed Apps Script Web App URL
-//  after deploying WebApp.gs (Deploy → New deployment → Web app)
-// ══════════════════════════════════════════════════════════════
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz3PaJXilY7RGuG7rC1edbCu-Kl-xWfy5fHlYXktDRbXtHlzo8wUptW7gU7J_xqmZpJYw/exec';
+// ── CONFIG ────────────────────────────────────────────────────────
+// Your deployed Apps Script Web App URL.
+// The script must be deployed as:
+//   Execute as: Me  |  Access: Anyone (no sign-in required)
+// ─────────────────────────────────────────────────────────────────
+const WEBAPP = 'https://script.google.com/macros/s/AKfycbz3PaJXilY7RGuG7rC1edbCu-Kl-xWfy5fHlYXktDRbXtHlzo8wUptW7gU7J_xqmZpJYw/exec';
 
-// Set to true to use hardcoded sample data (offline/dev mode)
-// Set to false once your Web App is deployed
-const OFFLINE_MODE = false;
+// Set DEMO = true if you want sample data while the Apps Script is not ready
+const DEMO = false;
 
-// ── State ──────────────────────────────────────────────────────
-let activeTab    = 'today';
-let wtdPeriod    = 'wtd';
-let cachedData   = {};    // cache by cacheKey
-let localRemarks = [];    // remarks added this session (before reload)
-Chart.register(ChartDataLabels);
+// ── BU / Brand config ─────────────────────────────────────────────
+const BU_CLR = {'Self Warehouse':'#1D9E75','Dark Store':'#6A63CC',
+  '3PL B2C':'#2D7DD6','3PL B2B':'#888','Unknown':'#AAA'};
+const BU_BADGE = {'Self Warehouse':'b-sw','Dark Store':'b-ds',
+  '3PL B2C':'b-b2c','3PL B2B':'b-b2b'};
+const BRANDS = ['Little Joy','Be Bodywise','Man Matters','OWN'];
+const BFILL  = {'Little Joy':'#B5D4F4','Be Bodywise':'#9FE1CB',
+  'Man Matters':'#FAC775','OWN':'#D3D1C7'};
+const BBDR   = {'Little Joy':'#2D7DD6','Be Bodywise':'#1D9E75',
+  'Man Matters':'#B8720F','OWN':'#888'};
+
+// ── State ─────────────────────────────────────────────────────────
+let activeTab = 'today';
+let wtdPer = 'wtd';
 const CHARTS = {};
+let localRemarks = [];
+let lastData = {};
 
-// ── BU config ──────────────────────────────────────────────────
-const BU_CFG = [
-  {key:'Self Warehouse', color:'#1D9E75'},
-  {key:'Dark Store',     color:'#7F77DD'},
-  {key:'3PL B2C',        color:'#378ADD'},
-  {key:'3PL B2B',        color:'#888780'},
-  {key:'Unknown',        color:'#B4B2A9'}
-];
-const BU_FAC   = {'Self Warehouse':4,'Dark Store':5,'3PL B2C':12,'3PL B2B':1,'Unknown':1};
-const BU_BADGE = {'3PL B2B':'b-b2b','3PL B2C':'b-b2c','Dark Store':'b-ds','Self Warehouse':'b-sw','Unknown':'b-unk'};
-const BRANDS   = ['Little Joy','Be Bodywise','Man Matters','OWN'];
-const BFILL    = {'Little Joy':'#B5D4F4','Be Bodywise':'#9FE1CB','Man Matters':'#FAC775','OWN':'#D3D1C7'};
-const BBORDER  = {'Little Joy':'#378ADD','Be Bodywise':'#1D9E75','Man Matters':'#BA7517','OWN':'#888780'};
+Chart.register(ChartDataLabels);
 
-// ══════════════════════════════════════════════════════════════
-//  API LAYER — uses JSONP to bypass CORS
-//  Google Apps Script blocks fetch() from external origins.
-//  JSONP injects a <script> tag instead — no CORS headers needed.
-// ══════════════════════════════════════════════════════════════
-
-// JSONP helper — injects a script tag, resolves when callback fires
+// ── JSONP (bypass CORS on Apps Script) ───────────────────────────
 function jsonpFetch(url) {
   return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Math.random().toString(36).slice(2);
-    const script = document.createElement('script');
-    const timer  = setTimeout(() => {
-      cleanup();
-      reject(new Error('JSONP timeout — Apps Script did not respond in 15s'));
-    }, 15000);
-
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    const sc = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup(); reject(new Error('Timeout – Apps Script did not respond in 20 s'));
+    }, 20000);
     function cleanup() {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer); delete window[cb];
+      if (sc.parentNode) sc.parentNode.removeChild(sc);
     }
-
-    window[cbName] = function(data) {
+    window[cb] = function(data) {
       cleanup();
       if (data && data.ok === false) reject(new Error(data.error || 'API error'));
       else resolve(data && data.data !== undefined ? data.data : data);
     };
-
-    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
-    script.onerror = () => { cleanup(); reject(new Error('JSONP script load failed')); };
-    document.head.appendChild(script);
+    sc.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
+    sc.onerror = () => { cleanup(); reject(new Error('Script load failed – check Web App URL')); };
+    document.head.appendChild(sc);
   });
 }
 
 async function apiFetch(params) {
-  if (OFFLINE_MODE) return offlineData(params);
-  const url = WEBAPP_URL + '?' + new URLSearchParams(params).toString();
+  if (DEMO) return demoData(params);
+  const url = WEBAPP + '?' + new URLSearchParams(params);
   return jsonpFetch(url);
 }
 
 async function apiPost(body) {
-  if (OFFLINE_MODE) {
+  if (DEMO) {
     localRemarks.unshift({
       submittedAt: new Date().toLocaleString('en-IN'),
-      name:        body.name,
-      facility:    body.facility || '',
-      tags:        Array.isArray(body.tags) ? body.tags.join(', ') : '',
-      remark:      body.remarkText,
-      dateRef:     new Date().toLocaleDateString('en-IN')
+      name: body.name, facility: body.facility || '',
+      tags: (body.tags || []).join(', '),
+      remark: body.remarkText,
+      dateRef: new Date().toLocaleDateString('en-IN')
     });
     return { success: true };
   }
-  // POST via JSONP (encode body as query params since JSONP is GET-only)
-  const params = { ...body, action: body.action };
-  return jsonpFetch(WEBAPP_URL + '?' + new URLSearchParams(params).toString());
+  // Send as query params (JSONP is GET-only)
+  return jsonpFetch(WEBAPP + '?' + new URLSearchParams({ ...body, action: body.action }));
 }
 
-// ══════════════════════════════════════════════════════════════
-//  OFFLINE / SAMPLE DATA
-//  Used when OFFLINE_MODE = true or no Web App URL set
-// ══════════════════════════════════════════════════════════════
-function offlineData(params) {
-  const {action, period} = params;
-  if (action === 'ping') return {status:'offline-demo',ts:new Date().toLocaleString()};
-  if (action === 'prohibited') return SAMPLE_PROHIBITED;
-  if (action === 'remarks')    return localRemarks.concat(SAMPLE_REMARKS);
-  if (action === 'summary')    return buildSampleSummary(period || 'today');
-  return {};
+// ── Status helpers ────────────────────────────────────────────────
+function setStatus(state, msg) {
+  const dot = document.getElementById('sdot');
+  const txt = document.getElementById('stxt');
+  dot.className = 'sdot ' + state;
+  txt.textContent = msg;
+  if (state === 'live') {
+    document.getElementById('sright').textContent =
+      'Last updated: ' + new Date().toLocaleTimeString('en-IN');
+  }
+}
+function showErr(elId, err) {
+  const el = document.getElementById(elId);
+  if (el) el.innerHTML = `<div class="loading" style="color:var(--red)">
+    ⚠ ${err.message || err}</div>`;
+  setStatus('err', 'Error: ' + (err.message || err));
+  const b = document.getElementById('ebanner');
+  b.style.display = 'block';
+  b.textContent = '⚠ ' + (err.message || err) +
+    ' — Check that the Apps Script Web App is deployed (Execute as: Me, Access: Anyone).';
 }
 
-function buildSampleSummary(period) {
-  const allDates = ['2026-06-01','2026-06-02','2026-06-03','2026-06-04','2026-06-05'];
-  const dates    = period === 'today' ? ['2026-06-05'] : allDates;
-
-  const DAILY_FULL = {
-    '2026-06-01':{add:525,remove:525},
-    '2026-06-02':{add:9111,remove:9111},
-    '2026-06-03':{add:87582,remove:85362},
-    '2026-06-04':{add:10887,remove:10668},
-    '2026-06-05':{add:1310,remove:1310}
-  };
-  const BRAND_FULL = {
-    '2026-06-01':{'Be Bodywise':882,'Man Matters':168,'Little Joy':0,'OWN':0},
-    '2026-06-02':{'Be Bodywise':8484,'Man Matters':2358,'Little Joy':7380,'OWN':0},
-    '2026-06-03':{'Be Bodywise':43721,'Man Matters':38903,'Little Joy':90320,'OWN':0},
-    '2026-06-04':{'Be Bodywise':5256,'Man Matters':423,'Little Joy':14844,'OWN':1032},
-    '2026-06-05':{'Be Bodywise':146,'Man Matters':0,'Little Joy':2474,'OWN':0}
-  };
-  const BU_FULL_WTD = {'Self Warehouse':42248,'Dark Store':131149,'3PL B2C':40570,'3PL B2B':1392,'Unknown':1032};
-  const BU_TODAY    = {'Self Warehouse':2474,'3PL B2C':75};
-
-  const daily = dates.map(d => ({
-    date:d, label:_dateLabel(d),
-    add:DAILY_FULL[d]?.add||0, remove:DAILY_FULL[d]?.remove||0
-  }));
-
-  const brandDaily = [];
-  dates.forEach(d => {
-    BRANDS.forEach(b => {
-      const qty = BRAND_FULL[d]?.[b]||0;
-      if (qty > 0) brandDaily.push({date:d, label:_dateLabel(d), brand:b, qty});
-    });
-  });
-
-  const totalAdd = daily.reduce((s,r)=>s+r.add,0);
-  const totalRem = daily.reduce((s,r)=>s+r.remove,0);
-  const buMap    = period==='today' ? BU_TODAY : BU_FULL_WTD;
-  const buTotals = Object.keys(buMap).map(k=>({bu:k,qty:buMap[k]})).sort((a,b)=>b.qty-a.qty);
-
-  const FAC_ROWS = [
-    {facility:'MH_PND_DELHI',bu:'Dark Store',add:66729,rem:64288,gAdd:63843,gRem:58556,bAdd:2886,bRem:5732,txns:5939},
-    {facility:'SL Mother Hub',bu:'Self Warehouse',add:21124,rem:21124,gAdd:19611,gRem:19804,bAdd:375,bRem:182,txns:743},
-    {facility:'MM Beyond NCR',bu:'3PL B2C',add:16289,rem:16289,gAdd:16289,gRem:0,bAdd:0,bRem:16289,txns:26},
-    {facility:'BW Ahmedabad',bu:'3PL B2C',add:1284,rem:1284,gAdd:1284,gRem:0,bAdd:0,bRem:1284,txns:4},
-    {facility:'MP Beyond NCR',bu:'3PL B2C',add:1518,rem:1518,gAdd:1518,gRem:0,bAdd:0,bRem:1518,txns:33},
-    {facility:'BLR B2B Offline',bu:'3PL B2B',add:696,rem:696,gAdd:696,gRem:696,bAdd:0,bRem:0,txns:12},
-    {facility:'SL Ambient',bu:'Self Warehouse',add:1138,rem:1138,gAdd:1138,gRem:1131,bAdd:0,bRem:7,txns:6},
-    {facility:'BW Beyond NCR',bu:'3PL B2C',add:532,rem:532,gAdd:532,gRem:532,bAdd:0,bRem:0,txns:18},
-    {facility:'BW Kolkata',bu:'3PL B2C',add:192,rem:192,gAdd:192,gRem:0,bAdd:0,bRem:192,txns:2},
-  ];
-  const facRows = (period === 'today')
-    ? [{facility:'SL Mother Hub',bu:'Self Warehouse',add:1237,rem:1237,gAdd:1237,gRem:1237,bAdd:0,bRem:0,txns:24},
-       {facility:'BW Beyond NCR',bu:'3PL B2C',add:73,rem:73,gAdd:73,gRem:73,bAdd:0,bRem:0,txns:2},
-       {facility:'BW EMIZA BLR',bu:'3PL B2C',add:0,rem:2,gAdd:0,gRem:0,bAdd:0,bRem:2,txns:2}]
-    : FAC_ROWS;
-
-  return {
-    period,
-    generatedAt: new Date().toLocaleString('en-IN'),
-    metrics: {
-      addQty:totalAdd, remQty:totalRem, net:totalAdd-totalRem,
-      goodAdd:period==='today'?1310:106154,
-      badAdd:period==='today'?0:3261,
-      goodRemove:period==='today'?1310:80703,
-      badRemove:period==='today'?0:26273,
-      facilities:period==='today'?3:22, totalRows:period==='today'?28:6798
-    },
-    daily, brandDaily, buTotals, facilityRows:facRows,
-    invBreakdown:{
-      gAdd:period==='today'?1310:106154, gRem:period==='today'?1310:80703,
-      bAdd:period==='today'?0:3261,     bRem:period==='today'?0:26273
-    }
-  };
-}
-
-const SAMPLE_PROHIBITED = [
-  {importedAt:'05-06-2026 15:30:00 IST',emailDate:'05-06-2026',facility:'LJ_ER_Rahatani',
-   businessUnit:'Self Warehouse',brand:'Little Joy',skuCode:'MWLJSKS.0001.B0_N',
-   itemName:'LJ Neem Body wash 30ml (Mini)',batch:'BA024736',invType:'GOOD_INVENTORY',
-   quantity:10,oldQty:10,created:'01-06-2026 14:59',username:'ops.user@mosaicwellness.in',
-   remarks:'Inventory of sku replaced forcefully i.e ignoring pendency',reviewStatus:'PENDING REVIEW'},
-  {importedAt:'05-06-2026 15:30:00 IST',emailDate:'05-06-2026',facility:'LJ_ER_Rahatani',
-   businessUnit:'Self Warehouse',brand:'Little Joy',skuCode:'MWLJSKS.0001.B0_N',
-   itemName:'LJ Neem Body wash 30ml (Mini)',batch:'BA024736',invType:'GOOD_INVENTORY',
-   quantity:9,oldQty:9,created:'01-06-2026 15:14',username:'ops.user@mosaicwellness.in',
-   remarks:'Inventory of sku replaced forcefully i.e ignoring pendency',reviewStatus:'PENDING REVIEW'}
-];
-const SAMPLE_REMARKS = [];
-
-// ══════════════════════════════════════════════════════════════
-//  TAB SWITCHING
-// ══════════════════════════════════════════════════════════════
+// ── Tab switching ─────────────────────────────────────────────────
 function switchTab(id, btn) {
-  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  btn.classList.add('active');
+  document.querySelectorAll('.tpanel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + id).classList.add('on');
+  btn.classList.add('on');
   activeTab = id;
-  loadTab(id);
+  if (id === 'today') loadToday();
+  else if (id === 'wtd') loadWTD();
+  else if (id === 'remarks') loadRemarks();
+  else if (id === 'prohibited') loadProhibited();
 }
-
-async function loadTab(id) {
-  if      (id === 'today')      await loadToday();
-  else if (id === 'wtd')        await loadWTD();
-  else if (id === 'remarks')    await loadRemarks();
-  else if (id === 'prohibited') await loadProhibited();
-}
-
-function setWTDPeriod(p, btn) {
-  wtdPeriod = p;
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+function setPeriod(p, btn) {
+  wtdPer = p;
+  document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
   loadWTD();
 }
+async function refreshAll(btn) {
+  btn.textContent = 'Refreshing…';
+  btn.disabled = true;
+  document.getElementById('ebanner').style.display = 'none';
+  await loadToday();
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Refresh`;
+  btn.disabled = false;
+}
 
-// ══════════════════════════════════════════════════════════════
-//  DATA LOADERS
-// ══════════════════════════════════════════════════════════════
+// ── Data loaders ──────────────────────────────────────────────────
 async function loadToday() {
   const el = document.getElementById('today-content');
-  const p  = { action:'summary', period:'today',
-               bu:_fv('f-bu-t'), brand:_fv('f-brand-t'), inv:_fv('f-inv-t') };
+  setStatus('loading', 'Loading today's data…');
+  el.innerHTML = `<div class="loading"><div class="spin"></div>Loading…</div>`;
   try {
-    el.innerHTML = _loadingHTML("Loading today's data...");
-    const data = await apiFetch(p);
-    document.getElementById('today-label').textContent =
-      data.generatedAt ? data.generatedAt.split(' ').slice(0,1).join(' ') : 'today';
-    el.innerHTML = buildSummaryHTML('today', data);
-    renderCharts('today', data);
-    setStatus('live', 'Live data · ' + (data.generatedAt || ''));
-  } catch(e) { showError(el, e); }
+    const data = await apiFetch({
+      action: 'summary', period: 'today',
+      bu: fv('fbu-t'), brand: fv('fbrand-t'), inv: fv('finv-t')
+    });
+    lastData.today = data;
+    document.getElementById('tlabel').textContent =
+      data.generatedAt ? data.generatedAt.split(' ')[0] : 'today';
+    el.innerHTML = buildSummaryHTML('tod', data);
+    renderCharts('tod', data);
+    setStatus('live', 'Live data connected');
+  } catch(e) { showErr('today-content', e); }
 }
 
 async function loadWTD() {
   const el = document.getElementById('wtd-content');
-  const p  = { action:'summary', period:wtdPeriod,
-               bu:_fv('f-bu-w'), brand:_fv('f-brand-w'), inv:_fv('f-inv-w') };
+  el.innerHTML = `<div class="loading"><div class="spin"></div>Loading ${wtdPer.toUpperCase()} data…</div>`;
   try {
-    el.innerHTML = _loadingHTML('Loading ' + wtdPeriod.toUpperCase() + ' data...');
-    const data = await apiFetch(p);
-    el.innerHTML = buildSummaryHTML(wtdPeriod, data);
-    renderCharts(wtdPeriod, data);
-    setStatus('live', 'Live data · ' + (data.generatedAt || ''));
-  } catch(e) { showError(el, e); }
+    const data = await apiFetch({
+      action: 'summary', period: wtdPer,
+      bu: fv('fbu-w'), brand: fv('fbrand-w'), inv: fv('finv-w')
+    });
+    lastData.wtd = data;
+    el.innerHTML = buildSummaryHTML('wtd', data);
+    renderCharts('wtd', data);
+    setStatus('live', 'Live data connected');
+  } catch(e) { showErr('wtd-content', e); }
 }
 
 async function loadRemarks() {
   try {
-    const data = await apiFetch({ action:'remarks' });
-    renderRemarks(data);
-  } catch(e) {
-    renderRemarks(localRemarks);
-  }
+    const data = await apiFetch({ action: 'remarks' });
+    renderRemarks(localRemarks.concat(Array.isArray(data) ? data : []));
+  } catch(e) { renderRemarks(localRemarks); }
 }
 
 async function loadProhibited() {
-  const el = document.getElementById('prohibited-content');
+  const el = document.getElementById('proh-content');
+  el.innerHTML = `<div class="loading"><div class="spin"></div>Loading…</div>`;
   try {
-    el.innerHTML = _loadingHTML('Loading prohibited cases...');
-    const data = await apiFetch({ action:'prohibited' });
-    document.getElementById('proh-count').textContent = data.length || 0;
+    const data = await apiFetch({ action: 'prohibited' });
+    document.getElementById('pcnt').textContent = data.length || 0;
     el.innerHTML = renderProhibited(data);
-  } catch(e) { showError(el, e); }
+  } catch(e) { showErr('proh-content', e); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  HTML BUILDERS
-// ══════════════════════════════════════════════════════════════
-function buildSummaryHTML(period, d) {
+// ── HTML builders ─────────────────────────────────────────────────
+function buildSummaryHTML(pfx, d) {
   const m = d.metrics || {};
-  const net = (m.net || 0);
+  const net = m.net || 0;
   const cards = [
-    {l:'Total add qty',    v:_fmtN(m.addQty),    s:'Units added',         cls:'cv-teal'},
-    {l:'Total remove qty', v:_fmtN(m.remQty),    s:'Units removed',       cls:'cv-red'},
-    {l:'Net movement',     v:(net>=0?'+':'')+_fmtN(net), s:'Add − Remove', cls:net>=0?'cv-teal':'cv-red'},
-    {l:'Good inventory add',v:_fmtN(m.goodAdd),  s:'GOOD_INVENTORY',      cls:'cv-blue'},
-    {l:'Bad inventory add', v:_fmtN(m.badAdd),   s:'BAD_INVENTORY',       cls:'cv-amber'},
-    {l:'Active facilities', v:m.facilities||0,   s:'In period',           cls:'cv-purple'},
+    {l:'Total add qty',  v:fmt(m.addQty),  s:'Units added',     cls:'ct'},
+    {l:'Total remove qty', v:fmt(m.remQty), s:'Units removed',  cls:'cr'},
+    {l:'Net movement',   v:(net>=0?'+':'')+fmt(net), s:'Add − Remove', cls:net>=0?'ct':'cr'},
+    {l:'Good inv add',   v:fmt(m.goodAdd), s:'GOOD_INVENTORY',  cls:'cb'},
+    {l:'Bad inv add',    v:fmt(m.badAdd),  s:'BAD_INVENTORY',   cls:'ca'},
+    {l:'Active facilities', v:m.facilities||0, s:'In period',   cls:'cp'},
   ];
 
-  const metricsHTML = `
-    <div class="divider-label">Summary</div>
-    <div class="metric-grid section">
-      ${cards.map(c=>`<div class="metric-card">
-        <div class="m-label">${c.l}</div>
-        <div class="m-val ${c.cls}">${c.v}</div>
-        <div class="m-sub">${c.s}</div>
-      </div>`).join('')}
-    </div>`;
+  const metrics = `<div class="slbl">Summary</div>
+  <div class="mgrid" style="margin-bottom:14px">
+    ${cards.map(c=>`<div class="mcard">
+      <div class="ml">${c.l}</div>
+      <div class="mv ${c.cls}">${c.v}</div>
+      <div class="ms">${c.s}</div>
+    </div>`).join('')}
+  </div>`;
 
-  const chartPrefix = period === 'today' ? 'tod' : 'wtd';
-  const chartsHTML = `
-    <div class="divider-label">Day-on-day movement</div>
-    <div class="two-col section">
-      <div class="chart-card">
-        <h3>Quantity adjusted by date</h3>
-        <div class="chart-sub">Add vs Remove units per day</div>
-        <div class="legend">
-          <span><span class="leg-sq" style="background:#97C459"></span>Add</span>
-          <span><span class="leg-sq" style="background:#F09595"></span>Remove</span>
-        </div>
-        <div class="chart-wrap" style="height:190px">
-          <canvas id="c-${chartPrefix}-daily" role="img" aria-label="Add vs Remove by date"></canvas>
-        </div>
+  const charts = `<div class="slbl">Day-on-day movement</div>
+  <div class="two">
+    <div class="ccrd">
+      <h3>Quantity by date</h3>
+      <div class="csub">Add vs Remove units per day</div>
+      <div class="cleg">
+        <span><span class="lsq" style="background:#97C459"></span>Add</span>
+        <span><span class="lsq" style="background:#F09595"></span>Remove</span>
       </div>
-      <div class="chart-card">
-        <h3>Brand contribution by date</h3>
-        <div class="chart-sub">Units per brand stacked by date</div>
-        <div class="legend">
-          <span><span class="leg-sq" style="background:#B5D4F4"></span>Little Joy</span>
-          <span><span class="leg-sq" style="background:#9FE1CB"></span>Be Bodywise</span>
-          <span><span class="leg-sq" style="background:#FAC775"></span>Man Matters</span>
-          <span><span class="leg-sq" style="background:#D3D1C7"></span>OWN</span>
-        </div>
-        <div class="chart-wrap" style="height:190px">
-          <canvas id="c-${chartPrefix}-brand" role="img" aria-label="Brand contribution by date"></canvas>
-        </div>
+      <div class="cwrap" style="height:185px">
+        <canvas id="c-${pfx}-daily" role="img" aria-label="Add vs Remove by date"></canvas>
       </div>
     </div>
-    <div class="divider-label">Composition</div>
-    <div class="two-col section">
-      <div class="bu-card">
-        <h3>Quantity by business unit</h3>
-        <div class="chart-sub" style="font-size:10px;color:var(--c-text-3);margin-bottom:14px">
-          Total units (add + remove) proportional to bar width
-        </div>
-        <div id="bu-${chartPrefix}"></div>
+    <div class="ccrd">
+      <h3>Brand contribution</h3>
+      <div class="csub">Units per brand stacked by date</div>
+      <div class="cleg">
+        <span><span class="lsq" style="background:#B5D4F4"></span>LJ</span>
+        <span><span class="lsq" style="background:#9FE1CB"></span>BB</span>
+        <span><span class="lsq" style="background:#FAC775"></span>MM</span>
+        <span><span class="lsq" style="background:#D3D1C7"></span>OWN</span>
       </div>
-      <div class="chart-card">
-        <h3>Good vs bad inventory</h3>
-        <div class="chart-sub">Units by quality across add &amp; remove</div>
-        <div class="legend">
-          <span><span class="leg-sq" style="background:#97C459"></span>Good Add</span>
-          <span><span class="leg-sq" style="background:#9FE1CB"></span>Good Remove</span>
-          <span><span class="leg-sq" style="background:#FAC775"></span>Bad Add</span>
-          <span><span class="leg-sq" style="background:#F09595"></span>Bad Remove</span>
-        </div>
-        <div class="chart-wrap" style="height:190px">
-          <canvas id="c-${chartPrefix}-inv" role="img" aria-label="Good vs bad inventory"></canvas>
-        </div>
+      <div class="cwrap" style="height:185px">
+        <canvas id="c-${pfx}-brand" role="img" aria-label="Brand contribution by date"></canvas>
       </div>
-    </div>`;
+    </div>
+  </div>
 
-  const facHTML = `
-    <div class="divider-label">Facility detail</div>
-    <div class="table-card section">
-      <div class="table-card-header">
-        <h3>Facility-wise batch adjustment</h3>
-        <div style="font-size:10px;color:var(--c-text-3);margin-top:2px">
-          Add &amp; Remove split by inventory type · sorted by total volume
-        </div>
+  <div class="slbl">Composition</div>
+  <div class="two" style="margin-bottom:14px">
+    <div class="ccrd">
+      <h3>By business unit</h3>
+      <div class="csub">Total units (add + remove) by BU</div>
+      <div id="bu-${pfx}" style="padding-top:8px"></div>
+    </div>
+    <div class="ccrd">
+      <h3>Good vs bad inventory</h3>
+      <div class="csub">Units split by quality type</div>
+      <div class="cleg">
+        <span><span class="lsq" style="background:#97C459"></span>Good add</span>
+        <span><span class="lsq" style="background:#9FE1CB"></span>Good remove</span>
+        <span><span class="lsq" style="background:#FAC775"></span>Bad add</span>
+        <span><span class="lsq" style="background:#F09595"></span>Bad remove</span>
       </div>
-      <div class="table-scroll">
-        <table>
-          <thead><tr>
-            <th>Facility</th><th>Business unit</th>
-            <th class="nr">Add qty</th><th class="nr">Remove qty</th><th class="nr">Net</th>
-            <th class="nr">Good add</th><th class="nr">Good remove</th>
-            <th class="nr">Bad add</th><th class="nr">Bad remove</th>
-            <th class="nr">Txns</th>
-          </tr></thead>
-          <tbody>
-            ${(d.facilityRows||[]).map(r => {
-              const net = r.add - r.rem;
-              return `<tr>
-                <td style="font-weight:500">${r.facility}</td>
-                <td><span class="badge ${BU_BADGE[r.bu]||'b-unk'}">${r.bu}</span></td>
-                <td class="nr"><span class="pill p-add">${_fmtN(r.add)}</span></td>
-                <td class="nr"><span class="pill p-rem">${_fmtN(r.rem)}</span></td>
-                <td class="nr ${net>=0?'p-pos':'p-neg'}">${net>=0?'+':''}${_fmtN(net)}</td>
-                <td class="nr" style="color:#3B6D11">${_fmtN(r.gAdd)}</td>
-                <td class="nr" style="color:#0F6E56">${_fmtN(r.gRem)}</td>
-                <td class="nr" style="color:#BA7517">${r.bAdd ? _fmtN(r.bAdd) : '-'}</td>
-                <td class="nr" style="color:#C62828">${r.bRem ? _fmtN(r.bRem) : '-'}</td>
-                <td class="nr" style="color:var(--c-text-3)">${_fmtN(r.txns)}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
+      <div class="cwrap" style="height:185px">
+        <canvas id="c-${pfx}-inv" role="img" aria-label="Good vs bad inventory breakdown"></canvas>
       </div>
-    </div>`;
+    </div>
+  </div>`;
 
-  return metricsHTML + chartsHTML + facHTML;
+  const rows = (d.facilityRows || []);
+  const fac = `<div class="slbl">Facility detail</div>
+  <div class="tcrd">
+    <div class="tcrdhdr">
+      <h3>Facility-wise batch adjustment</h3>
+      <div style="font-size:10px;color:var(--txt3);margin-top:2px">
+        Add &amp; Remove split by inventory type · sorted by total volume
+      </div>
+    </div>
+    <div class="tscroll"><table>
+      <thead><tr>
+        <th>Facility</th><th>BU</th>
+        <th class="nr">Add</th><th class="nr">Remove</th><th class="nr">Net</th>
+        <th class="nr">Good add</th><th class="nr">Good rem</th>
+        <th class="nr">Bad add</th><th class="nr">Bad rem</th>
+        <th class="nr">Txns</th>
+      </tr></thead>
+      <tbody>
+      ${rows.map(r=>{
+        const net = r.add - r.rem;
+        return `<tr>
+          <td style="font-weight:500">${r.facility}</td>
+          <td><span class="bdg ${BU_BADGE[r.bu]||'b-unk'}">${r.bu||'—'}</span></td>
+          <td class="nr"><span class="pill padd">${fmt(r.add)}</span></td>
+          <td class="nr"><span class="pill prem">${fmt(r.rem)}</span></td>
+          <td class="nr ${net>=0?'ppos':'pneg'}">${net>=0?'+':''}${fmt(net)}</td>
+          <td class="nr" style="color:var(--grn)">${fmt(r.gAdd)}</td>
+          <td class="nr" style="color:var(--teal-dk)">${fmt(r.gRem)}</td>
+          <td class="nr" style="color:var(--amb)">${r.bAdd?fmt(r.bAdd):'—'}</td>
+          <td class="nr" style="color:var(--red)">${r.bRem?fmt(r.bRem):'—'}</td>
+          <td class="nr" style="color:var(--txt3)">${fmt(r.txns)}</td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+
+  return metrics + charts + fac;
 }
 
 function renderProhibited(cases) {
-  if (!cases || cases.length === 0) {
-    return '<div class="empty-state">✅ No prohibited (REPLACE) transactions found in this period.</div>';
-  }
-  return cases.map((c, i) => `
-    <div class="proh-card">
-      <div class="proh-header">
-        <span style="font-size:18px">⚠</span>
-        <span class="proh-title">Case ${i+1} of ${cases.length} · ${c.created || c.importedAt}</span>
-        <span class="badge b-${(c.reviewStatus||'').toLowerCase().includes('pending')?'ds':'b2c'}"
-              style="margin-left:auto;font-size:10px">${c.reviewStatus||'PENDING'}</span>
+  if (!cases || !cases.length)
+    return '<div class="empty">✅ No prohibited (REPLACE) transactions found.</div>';
+  return cases.map((c,i) => `
+    <div class="pcrd">
+      <div class="phdr2">
+        <span style="font-size:17px">⚠</span>
+        <span class="ptitle">Case ${i+1} of ${cases.length} · ${c.created||c.importedAt||''}</span>
+        <span class="bdg ${(c.reviewStatus||'').includes('PENDING')?'b-ds':'b-sw'}"
+          style="margin-left:auto;font-size:10px">${c.reviewStatus||'PENDING REVIEW'}</span>
       </div>
-      <div class="proh-grid">
-        <div><div class="proh-field-label">Facility</div><div class="proh-field-val">${c.facility}</div></div>
-        <div><div class="proh-field-label">Business unit</div><div class="proh-field-val">
-          <span class="badge ${BU_BADGE[c.businessUnit]||'b-unk'}">${c.businessUnit}</span></div></div>
-        <div><div class="proh-field-label">Brand</div><div class="proh-field-val">${c.brand}</div></div>
-        <div><div class="proh-field-label">SKU code</div><div class="proh-field-val">${c.skuCode}</div></div>
-        <div><div class="proh-field-label">Item name</div><div class="proh-field-val">${c.itemName}</div></div>
-        <div><div class="proh-field-label">Batch</div><div class="proh-field-val">${c.batch}</div></div>
-        <div><div class="proh-field-label">Quantity</div>
-          <div class="proh-field-val" style="color:var(--c-red);font-weight:700">${c.quantity} units</div></div>
-        <div><div class="proh-field-label">Inventory type</div><div class="proh-field-val">${c.invType}</div></div>
-        <div><div class="proh-field-label">Operator</div><div class="proh-field-val">${c.username||'—'}</div></div>
+      <div class="pgrid">
+        <div><div class="pfl">Facility</div><div class="pfv">${c.facility||'—'}</div></div>
+        <div><div class="pfl">BU</div><div class="pfv">
+          <span class="bdg ${BU_BADGE[c.businessUnit]||'b-unk'}">${c.businessUnit||'—'}</span>
+        </div></div>
+        <div><div class="pfl">Brand</div><div class="pfv">${c.brand||'—'}</div></div>
+        <div><div class="pfl">SKU code</div><div class="pfv">${c.skuCode||'—'}</div></div>
+        <div><div class="pfl">Item name</div><div class="pfv">${c.itemName||'—'}</div></div>
+        <div><div class="pfl">Batch</div><div class="pfv">${c.batch||'—'}</div></div>
+        <div><div class="pfl">Quantity</div>
+          <div class="pfv" style="color:var(--red);font-weight:700">${c.quantity||0} units</div></div>
+        <div><div class="pfl">Inv type</div><div class="pfv">${c.invType||'—'}</div></div>
+        <div><div class="pfl">Operator</div><div class="pfv">${c.username||'—'}</div></div>
       </div>
-      <div class="proh-remarks">${c.remarks}</div>
+      <div class="prmk">${c.remarks||'No remarks recorded.'}</div>
     </div>`).join('') +
-    `<div style="background:var(--c-bg);border-radius:var(--radius-md);padding:12px 14px;
-       font-size:11px;color:var(--c-text-2);border:1px solid var(--c-border);display:flex;gap:8px">
-      <span style="flex-shrink:0">ℹ️</span>
-      <span>REPLACE transactions bypass WMS pendency. Review with warehouse ops and update
-      the Review Status column in <strong>NI_Prohibited</strong> once investigated.</span>
-    </div>`;
+  `<div style="background:var(--bg);border-radius:var(--rad);padding:11px 13px;
+    font-size:11px;color:var(--txt2);border:1px solid var(--bdr);display:flex;gap:7px">
+    <span style="flex-shrink:0">ℹ️</span>
+    <span>REPLACE transactions bypass WMS pendency. Update the Review Status column
+    in <strong>NI_Prohibited</strong> once each case is investigated.</span>
+  </div>`;
 }
 
 function renderRemarks(data) {
   const count = (data||[]).length;
-  document.getElementById('remark-count').textContent = count + (count===1?' entry':' entries');
-  const el = document.getElementById('remark-list');
-  if (!count) {
-    el.innerHTML = '<div class="empty-state">📋 No remarks yet. Add the first one above.</div>';
-    return;
-  }
+  document.getElementById('rcnt').textContent = count + (count===1?' entry':' entries');
+  const el = document.getElementById('rlist-body');
+  if (!count) { el.innerHTML = '<div class="empty">📋 No remarks yet. Add the first one above.</div>'; return; }
   el.innerHTML = (data||[]).map(r => {
-    const initials = (r.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const tags     = (r.tags||'').split(',').filter(Boolean);
-    return `<div class="remark-item">
-      <div class="remark-avatar">${initials}</div>
+    const ini = (r.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const tags = (r.tags||'').split(',').filter(Boolean);
+    return `<div class="ritem">
+      <div class="ravatar">${ini}</div>
       <div style="flex:1">
-        <div class="remark-meta">
-          <span style="font-weight:600;color:var(--c-text)">${r.name||'—'}</span>
+        <div class="rmeta">
+          <span style="font-weight:600;color:var(--txt)">${r.name||'—'}</span>
           <span>${r.submittedAt||''}</span>
-          ${r.facility ? `<span>📍 ${r.facility}</span>` : ''}
+          ${r.facility?`<span>📍 ${r.facility}</span>`:''}
         </div>
-        <div class="remark-text">${r.remark||r.remarkText||''}</div>
-        ${tags.length ? `<div class="remark-tags">${tags.map(t=>`<span class="remark-tag">${t.trim()}</span>`).join('')}</div>` : ''}
+        <div class="rtxt">${r.remark||r.remarkText||''}</div>
+        ${tags.length?`<div class="rtags">${tags.map(t=>`<span class="rtag">${t.trim()}</span>`).join('')}</div>`:''}
       </div>
     </div>`;
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════════════
-//  CHART RENDERERS
-// ══════════════════════════════════════════════════════════════
-function dc(id){if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}}
-function _barTop(col){return{anchor:'end',align:'end',color:col||'#5F5E5A',
-  font:{size:9,weight:'600'},formatter:v=>v>0?_fmtK(v):'',padding:{bottom:0}};}
+// ── Chart rendering ───────────────────────────────────────────────
+function dc(id) { if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; } }
+function _lbl(col) {
+  return { anchor:'end', align:'end', color:col, font:{size:9,weight:'600'},
+    formatter: v => v>0 ? fmtK(v) : '', padding:{bottom:0} };
+}
 
-function renderCharts(period, d) {
-  const pfx = period === 'today' ? 'tod' : 'wtd';
-
-  // ── Daily ───────────────────────────────────────────────────
+function renderCharts(pfx, d) {
+  // Daily add vs remove
   dc('c-'+pfx+'-daily');
-  const dCanvas = document.getElementById('c-'+pfx+'-daily');
-  if (dCanvas && d.daily) {
-    CHARTS['c-'+pfx+'-daily'] = new Chart(dCanvas, {
+  const dc1 = document.getElementById('c-'+pfx+'-daily');
+  if (dc1 && d.daily && d.daily.length) {
+    CHARTS['c-'+pfx+'-daily'] = new Chart(dc1, {
       type:'bar',
       data:{
-        labels: d.daily.map(r=>r.label),
+        labels: d.daily.map(r=>r.label||r.date),
         datasets:[
-          {label:'Add',    data:d.daily.map(r=>r.add),
-           backgroundColor:'#C0DD97',borderColor:'#639922',borderWidth:1,borderRadius:3,
-           datalabels:_barTop('#3B6D11')},
-          {label:'Remove', data:d.daily.map(r=>r.remove),
-           backgroundColor:'#F7C1C1',borderColor:'#E24B4A',borderWidth:1,borderRadius:3,
-           datalabels:_barTop('#A32D2D')}
+          {label:'Add',data:d.daily.map(r=>r.add),backgroundColor:'#C0DD97',
+           borderColor:'#639922',borderWidth:1,borderRadius:3,datalabels:_lbl('#3B6D11')},
+          {label:'Remove',data:d.daily.map(r=>r.remove||r.rem||0),backgroundColor:'#F7C1C1',
+           borderColor:'#D94040',borderWidth:1,borderRadius:3,datalabels:_lbl('#9C1B1B')}
         ]
       },
-      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},
         plugins:{legend:{display:false},datalabels:{display:true}},
         scales:{
-          x:{ticks:{font:{size:10},autoSkip:false,maxRotation:0},grid:{display:false}},
-          y:{ticks:{font:{size:10},callback:v=>_fmtK(v)},
-             grid:{color:'rgba(0,0,0,.04)'},
-             title:{display:true,text:'Units',font:{size:10},color:'#7A9589'}}
+          x:{ticks:{font:{size:9},autoSkip:false,maxRotation:0},grid:{display:false}},
+          y:{ticks:{font:{size:9},callback:v=>fmtK(v)},grid:{color:'rgba(0,0,0,.04)'},
+            title:{display:true,text:'Units',font:{size:9},color:'#7A9589'}}
         }}
     });
   }
 
-  // ── Brand ───────────────────────────────────────────────────
+  // Brand stacked
   dc('c-'+pfx+'-brand');
-  const bCanvas = document.getElementById('c-'+pfx+'-brand');
-  if (bCanvas && d.brandDaily) {
-    // build per-date per-brand matrix
-    const dateSet = [...new Set(d.daily.map(r=>r.date))].sort();
-    const activeBrands = BRANDS.filter(b =>
-      d.brandDaily.some(r => r.brand === b && r.qty > 0));
-
-    CHARTS['c-'+pfx+'-brand'] = new Chart(bCanvas, {
+  const dc2 = document.getElementById('c-'+pfx+'-brand');
+  if (dc2 && d.brandDaily && d.daily) {
+    const dates = [...new Set(d.daily.map(r=>r.date))].sort();
+    const active = BRANDS.filter(b => d.brandDaily.some(r=>r.brand===b && r.qty>0));
+    CHARTS['c-'+pfx+'-brand'] = new Chart(dc2, {
       type:'bar',
       data:{
-        labels: dateSet.map(dd => _dateLabel(dd)),
-        datasets: activeBrands.map(b => ({
-          label: b,
-          data:  dateSet.map(dd => {
-            const found = d.brandDaily.find(r => r.date===dd && r.brand===b);
-            return found ? found.qty : 0;
+        labels: dates.map(dd=>dlbl(dd)),
+        datasets: active.map(b=>({
+          label:b,
+          data: dates.map(dd=>{
+            const f = d.brandDaily.find(r=>r.date===dd&&r.brand===b);
+            return f?f.qty:0;
           }),
-          backgroundColor: BFILL[b], borderColor: BBORDER[b],
-          borderWidth:1, borderRadius:2,
-          maxBarThickness: activeBrands.length === 1 ? 40 : 60,
-          datalabels:{anchor:'center',align:'center',color:BBORDER[b],
-            font:{size:9,weight:'600'},formatter:v=>v>500?_fmtK(v):''}
+          backgroundColor:BFILL[b],borderColor:BBDR[b],borderWidth:1,borderRadius:2,
+          datalabels:{anchor:'center',align:'center',color:BBDR[b],
+            font:{size:9,weight:'600'},formatter:v=>v>300?fmtK(v):''}
         }))
       },
       options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4}},
         plugins:{legend:{display:false},datalabels:{display:true}},
         scales:{
-          x:{stacked:true,ticks:{font:{size:10},autoSkip:false,maxRotation:0},grid:{display:false}},
-          y:{stacked:true,ticks:{font:{size:10},callback:v=>_fmtK(v)},
-             grid:{color:'rgba(0,0,0,.04)'},
-             title:{display:true,text:'Units',font:{size:10},color:'#7A9589'}}
+          x:{stacked:true,ticks:{font:{size:9},autoSkip:false,maxRotation:0},grid:{display:false}},
+          y:{stacked:true,ticks:{font:{size:9},callback:v=>fmtK(v)},grid:{color:'rgba(0,0,0,.04)'},
+            title:{display:true,text:'Units',font:{size:9},color:'#7A9589'}}
         }}
     });
   }
 
-  // ── BU Impact bars ──────────────────────────────────────────
-  const buEl = document.getElementById('bu-'+pfx);
-  if (buEl && d.buTotals) {
+  // BU bars
+  const buel = document.getElementById('bu-'+pfx);
+  if (buel && d.buTotals) {
     const maxV = Math.max(...d.buTotals.map(r=>r.qty), 1);
-    buEl.innerHTML = d.buTotals.map(r => {
-      const cfg = BU_CFG.find(b=>b.key===r.bu) || {color:'#888780'};
-      const pct = Math.round(r.qty / maxV * 100);
-      return `<div class="bu-row">
-        <div class="bu-left">
-          <div class="bu-name">${r.bu}</div>
-          <div class="bu-fac">${BU_FAC[r.bu]||1} fac</div>
-        </div>
-        <div class="bu-bar-wrap">
-          <div class="bu-bar" style="width:${pct}%;background:${cfg.color}"></div>
-        </div>
-        <div class="bu-right">
-          <div class="bu-val" style="color:${cfg.color}">${_fmtL(r.qty)}</div>
-          <div class="bu-units">${_fmtU(r.qty)}</div>
+    buel.innerHTML = d.buTotals.map(r=>{
+      const pct = Math.round(r.qty/maxV*100);
+      const clr = BU_CLR[r.bu]||'#888';
+      return `<div class="brow">
+        <div class="bleft"><div class="bname">${r.bu}</div></div>
+        <div class="bbwrap"><div class="bbfill" style="width:${pct}%;background:${clr}"></div></div>
+        <div class="bright">
+          <div class="bval" style="color:${clr}">${fmtL(r.qty)}</div>
+          <div class="bunits">${fmtU(r.qty)}</div>
         </div>
       </div>`;
     }).join('');
   }
 
-  // ── Good vs Bad ─────────────────────────────────────────────
+  // Good vs bad
   dc('c-'+pfx+'-inv');
-  const invCanvas = document.getElementById('c-'+pfx+'-inv');
-  if (invCanvas && d.invBreakdown) {
+  const dc3 = document.getElementById('c-'+pfx+'-inv');
+  if (dc3 && d.invBreakdown) {
     const {gAdd,gRem,bAdd,bRem} = d.invBreakdown;
-    CHARTS['c-'+pfx+'-inv'] = new Chart(invCanvas, {
+    CHARTS['c-'+pfx+'-inv'] = new Chart(dc3, {
       type:'bar',
       data:{
         labels:['Good · Add','Good · Remove','Bad · Add','Bad · Remove'],
         datasets:[{
-          data:[gAdd,gRem,bAdd,bRem],
+          data:[gAdd||0,gRem||0,bAdd||0,bRem||0],
           backgroundColor:['#C0DD97','#9FE1CB','#FAC775','#F7C1C1'],
-          borderColor:['#639922','#1D9E75','#BA7517','#E24B4A'],
-          borderWidth:1, borderRadius:3,
+          borderColor:['#639922','#1D9E75','#B8720F','#D94040'],
+          borderWidth:1,borderRadius:3,
           datalabels:{anchor:'end',align:'right',
-            color:['#3B6D11','#0F6E56','#854F0B','#A32D2D'],
-            font:{size:9,weight:'600'},formatter:v=>v>0?_fmtK(v):''}
+            color:['#3B6D11','#0C6844','#7A4100','#9C1B1B'],
+            font:{size:9,weight:'600'},formatter:v=>v>0?fmtK(v):''}
         }]
       },
       options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
         layout:{padding:{right:38}},
         plugins:{legend:{display:false},datalabels:{display:true}},
         scales:{
-          x:{ticks:{font:{size:10},callback:v=>_fmtK(v)},grid:{color:'rgba(0,0,0,.04)'},
-             title:{display:true,text:'Units',font:{size:10},color:'#7A9589'}},
-          y:{ticks:{font:{size:10}},grid:{display:false}}
+          x:{ticks:{font:{size:9},callback:v=>fmtK(v)},grid:{color:'rgba(0,0,0,.04)'}},
+          y:{ticks:{font:{size:9}},grid:{display:false}}
         }}
     });
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  REMARKS FORM
-// ══════════════════════════════════════════════════════════════
-function toggleRemarkForm() {
-  const f = document.getElementById('remark-form');
+// ── Remarks form ──────────────────────────────────────────────────
+function toggleForm() {
+  const f = document.getElementById('rmkform');
   f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }
-function toggleTag(el) { el.classList.toggle('selected'); }
+function toggleTag(el) { el.classList.toggle('on'); }
 
 async function submitRemark() {
-  const name = document.getElementById('r-name').value.trim();
-  const text = document.getElementById('r-text').value.trim();
-  if (!name || !text) { alert('Please enter your name and remark.'); return; }
-  const fac  = document.getElementById('r-facility').value;
-  const tags = [...document.querySelectorAll('.tag-chip.selected')].map(t => t.textContent);
-
-  const btn = document.querySelector('.btn-save');
-  btn.textContent = 'Saving...'; btn.disabled = true;
-
+  const name = document.getElementById('rname').value.trim();
+  const txt  = document.getElementById('rtxt').value.trim();
+  if (!name || !txt) { alert('Name and remark are required.'); return; }
+  const tags = [...document.querySelectorAll('#tagrow .tchip.on')].map(t=>t.textContent);
+  const fac  = document.getElementById('rfac').value;
   try {
-    await apiPost({ action:'saveRemark', name, facility:fac, tags, remarkText:text });
-    document.getElementById('r-name').value  = '';
-    document.getElementById('r-text').value  = '';
-    document.getElementById('r-facility').value = '';
-    document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('selected'));
-    toggleRemarkForm();
-    await loadRemarks();
-  } catch(e) {
-    alert('Error saving remark: ' + e.message);
-  } finally {
-    btn.textContent = 'Save remark'; btn.disabled = false;
-  }
+    await apiPost({ action:'addRemark', name, remarkText:txt, tags, facility:fac });
+    document.getElementById('rname').value = '';
+    document.getElementById('rtxt').value  = '';
+    document.querySelectorAll('#tagrow .tchip').forEach(t=>t.classList.remove('on'));
+    toggleForm();
+    loadRemarks();
+  } catch(e) { alert('Error saving remark: ' + e.message); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  GLOBAL ACTIONS
-// ══════════════════════════════════════════════════════════════
-async function refreshAll(btn) {
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;animation:spin .7s linear infinite"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Refreshing...';
-  btn.disabled = true;
-  cachedData = {}; // clear cache
-  setStatus('loading', 'Refreshing...');
-  await loadTab(activeTab);
-  btn.innerHTML = orig; btn.disabled = false;
-}
-
-function downloadReport() {
-  // Build CSV from current summary data
-  const rows = [['Facility','Business Unit','Add Qty','Remove Qty','Net','Good Add','Good Remove','Bad Add','Bad Remove','Txns']];
-  document.querySelectorAll('#today-content tbody tr, #wtd-content tbody tr').forEach(tr => {
-    const cells = [...tr.querySelectorAll('td')].map(td => td.textContent.trim());
-    if (cells.length) rows.push(cells);
-  });
-  const csv  = rows.map(r => r.map(c => '"'+c+'"').join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a    = document.createElement('a');
-  a.href     = URL.createObjectURL(blob);
-  a.download = 'BatchAdjustment_' + new Date().toISOString().slice(0,10) + '.csv';
+// ── Export ────────────────────────────────────────────────────────
+function exportCSV() {
+  const d = lastData.today || lastData.wtd;
+  if (!d || !d.facilityRows) { alert('Load data first.'); return; }
+  const rows = [['Facility','BU','Add','Remove','Net','Good Add','Good Remove','Bad Add','Bad Remove','Txns']];
+  (d.facilityRows || []).forEach(r => rows.push([
+    r.facility,r.bu,r.add,r.rem,r.add-r.rem,r.gAdd,r.gRem,r.bAdd||0,r.bRem||0,r.txns
+  ]));
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'batch_adjustment_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
 }
 
-// ══════════════════════════════════════════════════════════════
-//  STATUS BAR
-// ══════════════════════════════════════════════════════════════
-function setStatus(state, msg) {
-  const dot  = document.getElementById('status-dot');
-  const text = document.getElementById('status-text');
-  dot.className  = 'status-dot ' + state;
-  text.textContent = msg;
-  if (state === 'live') {
-    document.getElementById('last-updated').textContent =
-      'Updated ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
-  }
+// ── Formatters ────────────────────────────────────────────────────
+function fmt(n) {
+  if (n === undefined || n === null) return '—';
+  return Number(n).toLocaleString('en-IN');
+}
+function fmtK(n) {
+  if (!n) return '0';
+  if (Math.abs(n) >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1000) return (n/1000).toFixed(1) + 'K';
+  return String(Math.round(n));
+}
+function fmtL(n) {
+  if (Math.abs(n||0) >= 1000) return Math.round(n/1000) + 'K';
+  return String(Math.round(n||0));
+}
+function fmtU(n) {
+  return Math.abs(n||0) >= 1000 ? (n/1000).toFixed(1) + 'K units' : n + ' units';
+}
+function dlbl(d) {
+  try { const p=d.split('-'); return p[2]+'/'+p[1]; } catch(e) { return d; }
+}
+function fv(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : 'all';
 }
 
-function showError(el, err) {
-  setStatus('error', 'Error loading data');
-  el.innerHTML = `<div style="padding:20px;color:var(--c-red);font-size:12px;
-    background:var(--c-red-lt);border-radius:var(--radius-md);border:1px solid #FFCDD2">
-    ⚠ ${err.message || 'Failed to load data.'}<br>
-    <span style="color:var(--c-text-3);font-size:11px;margin-top:4px;display:block">
-    Check that the Apps Script Web App is deployed and WEBAPP_URL is set correctly.</span>
-  </div>`;
-}
+// ── Demo data (used when DEMO = true) ────────────────────────────
+function demoData(params) {
+  const {action, period} = params;
+  if (action === 'prohibited') return DEMO_PROH;
+  if (action === 'remarks')    return DEMO_REMARKS.concat(localRemarks);
+  if (action === 'addRemark')  { localRemarks.unshift(params); return {success:true}; }
 
-// ══════════════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════════════
-function _fv(id) { const el = document.getElementById(id); return el ? el.value : 'all'; }
-function _fmtK(v){ return v>=1000 ? (v/1000).toFixed(1)+'k' : String(v); }
-function _fmtN(v){ return (v||0).toLocaleString('en-IN'); }
-function _fmtL(v){
-  if(v>=100000) return '₹'+(v/100000).toFixed(2)+'L';
-  if(v>=1000)   return '₹'+(v/1000).toFixed(1)+'K';
-  return '₹'+v;
+  const isToday = period === 'today';
+  const daily = isToday
+    ? [{date:'2026-06-05',label:'05/06',add:1310,remove:1310}]
+    : [
+        {date:'2026-06-01',label:'01/06',add:525,remove:525},
+        {date:'2026-06-02',label:'02/06',add:9111,remove:9111},
+        {date:'2026-06-03',label:'03/06',add:87582,remove:85362},
+        {date:'2026-06-04',label:'04/06',add:10887,remove:10668},
+        {date:'2026-06-05',label:'05/06',add:1310,remove:1310},
+      ];
+  const brandDaily = isToday
+    ? [{date:'2026-06-05',label:'05/06',brand:'Little Joy',qty:1310}]
+    : [
+        {date:'2026-06-01',label:'01/06',brand:'Be Bodywise',qty:525},
+        {date:'2026-06-02',label:'02/06',brand:'Be Bodywise',qty:4242},
+        {date:'2026-06-02',label:'02/06',brand:'Man Matters',qty:2358},
+        {date:'2026-06-02',label:'02/06',brand:'Little Joy',qty:2511},
+        {date:'2026-06-03',label:'03/06',brand:'Be Bodywise',qty:43721},
+        {date:'2026-06-03',label:'03/06',brand:'Man Matters',qty:38903},
+        {date:'2026-06-03',label:'03/06',brand:'Little Joy',qty:4958},
+        {date:'2026-06-04',label:'04/06',brand:'Be Bodywise',qty:5256},
+        {date:'2026-06-04',label:'04/06',brand:'Little Joy',qty:14844},
+        {date:'2026-06-05',label:'05/06',brand:'Little Joy',qty:1310},
+      ];
+  const buTotals = isToday
+    ? [{bu:'Self Warehouse',qty:1310}]
+    : [{bu:'Dark Store',qty:131149},{bu:'Self Warehouse',qty:42248},
+       {bu:'3PL B2C',qty:40570},{bu:'3PL B2B',qty:1392}];
+  const facRows = isToday
+    ? [{facility:'SL Mother Hub',bu:'Self Warehouse',add:1237,rem:1237,gAdd:1237,gRem:1237,bAdd:0,bRem:0,txns:24}]
+    : [
+        {facility:'MH_PND_DELHI',bu:'Dark Store',add:66729,rem:64288,gAdd:63843,gRem:58556,bAdd:2886,bRem:5732,txns:5939},
+        {facility:'SL Mother Hub',bu:'Self Warehouse',add:21124,rem:21124,gAdd:19611,gRem:19804,bAdd:375,bRem:182,txns:743},
+        {facility:'MM Beyond NCR',bu:'3PL B2C',add:16289,rem:16289,gAdd:16289,gRem:0,bAdd:0,bRem:16289,txns:26},
+        {facility:'BW Ahmedabad',bu:'3PL B2C',add:1284,rem:1284,gAdd:1284,gRem:0,bAdd:0,bRem:1284,txns:4},
+      ];
+  const addQ = daily.reduce((s,r)=>s+r.add,0);
+  const remQ = daily.reduce((s,r)=>s+r.remove,0);
+  return {
+    period, generatedAt:new Date().toLocaleString('en-IN'),
+    metrics:{addQty:addQ,remQty:remQ,net:addQ-remQ,
+      goodAdd:isToday?1310:106154,badAdd:isToday?0:3261,
+      goodRemove:isToday?1310:80703,badRemove:isToday?0:26273,
+      facilities:isToday?1:9,totalRows:isToday?28:6798},
+    daily,brandDaily,buTotals,facilityRows:facRows,
+    invBreakdown:{gAdd:isToday?1310:106154,gRem:isToday?1310:80703,
+      bAdd:isToday?0:3261,bRem:isToday?0:26273}
+  };
 }
-function _fmtU(v){ return v>=1000 ? (v/1000).toFixed(1)+'K units' : v+' units'; }
-function _dateLabel(iso) {
-  if(!iso||iso.length<10) return iso;
-  const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const p=iso.split('-'); return p[2]+' '+m[parseInt(p[1],10)-1];
-}
-function _loadingHTML(msg){
-  return `<div class="loading-state"><div class="spinner"></div>${msg}</div>`;
-}
+const DEMO_PROH = [
+  {importedAt:'05-06-2026',facility:'LJ_ER_Rahatani',businessUnit:'Self Warehouse',
+   brand:'Little Joy',skuCode:'MWLJSKS.0001.B0_N',itemName:'LJ Neem Body wash 30ml (Mini)',
+   batch:'BA024736',invType:'GOOD_INVENTORY',quantity:10,oldQty:10,
+   created:'01-06-2026 14:59',username:'ops.user@mosaicwellness.in',
+   remarks:'Inventory of sku replaced forcefully i.e ignoring pendency',reviewStatus:'PENDING REVIEW'},
+];
+const DEMO_REMARKS = [
+  {submittedAt:'04-06-2026 09:15 AM',name:'Suraj Gupta',facility:'SL Mother Hub',
+   tags:'Cycle Count, Warehouse Ops',
+   remark:'Cycle count completed for Be Bodywise SKUs. Discrepancies adjusted in batches BA015437 and BA022207.',
+   dateRef:'04-06-2026'},
+];
 
-// ══════════════════════════════════════════════════════════════
-//  BOOT
-// ══════════════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', async () => {
-  // Show connection status on load
-  if (OFFLINE_MODE) {
-    setStatus('loading', 'Demo mode — showing sample data.');
-  } else {
-    setStatus('loading', 'Connecting to live Google Sheets data...');
-  }
-
-  // Load all tabs in parallel
-  await Promise.all([
-    loadToday(),
-    loadProhibited()
-  ]);
-
-  // Load remarks separately
-  loadRemarks();
+// ── Init ──────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  setStatus('loading', 'Connecting to live data…');
+  loadToday().then(() => {
+    if (DEMO) setStatus('loading', 'Demo mode — set DEMO=false and deploy Apps Script for live data');
+  });
 });
 </script>
 </body>
