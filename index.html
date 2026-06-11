@@ -1,857 +1,727 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mosaic Wellness — Batch Adjustment Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <style>
-    /* ── Reset & Variables ────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mosaic Wellness · Batch Adjustment</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green:#1D9E75;--green-light:#E1F5EE;--green-dark:#0F6E56;--green-text:#085041;
+    --purple:#7F77DD;--purple-light:#EEEDFE;--purple-dark:#534AB7;
+    --amber:#BA7517;--amber-light:#FAEEDA;
+    --red:#E24B4A;--red-light:#FCEBEB;
+    --gray-50:#F8F8F7;--gray-100:#EEECE6;--gray-200:#D3D1C7;
+    --gray-400:#888780;--gray-700:#444441;--gray-900:#1A1A18;--white:#FFFFFF;
+    --radius:10px;--radius-sm:6px;
+    --shadow:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md:0 4px 16px rgba(0,0,0,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--gray-900);min-height:100vh;font-size:14px;}
 
-    :root {
-      --green       : #1a7e5a;
-      --green-dark  : #125c41;
-      --green-light : #e8f5ef;
-      --red         : #d63c3c;
-      --red-light   : #fdecea;
-      --blue        : #1a6eb5;
-      --amber       : #d97706;
-      --bg          : #f0f2f5;
-      --surface     : #ffffff;
-      --border      : #e2e6ea;
-      --text        : #1a1d23;
-      --muted       : #6b7280;
-      --mono        : 'DM Mono', 'Courier New', monospace;
-      --font        : 'Plus Jakarta Sans', system-ui, sans-serif;
-      --radius      : 8px;
-      --shadow      : 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-      --shadow-md   : 0 4px 12px rgba(0,0,0,.08);
-    }
+  /* LOGIN */
+  #login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--white);padding:2rem;}
+  .login-card{background:var(--white);border:1px solid var(--gray-100);border-radius:16px;padding:2.5rem 3rem;max-width:420px;width:100%;text-align:center;box-shadow:var(--shadow-md);}
+  .login-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:1.5rem;}
+  .login-logo-mark{width:44px;height:44px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+  .login-logo-mark svg{width:26px;height:26px;}
+  .login-logo-text{font-size:20px;font-weight:600;color:var(--gray-900);letter-spacing:-0.3px;}
+  .login-subtitle{font-size:11px;color:var(--gray-400);margin-bottom:0.25rem;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;}
+  .login-title{font-size:24px;font-weight:600;color:var(--gray-900);margin-bottom:0.5rem;letter-spacing:-0.3px;}
+  .login-desc{font-size:13.5px;color:var(--gray-400);margin-bottom:2rem;line-height:1.5;}
+  .login-domain-note{font-size:12px;color:var(--gray-400);margin-top:1.5rem;padding:0.75rem 1rem;background:var(--gray-50);border-radius:var(--radius-sm);border:1px solid var(--gray-100);}
+  .login-domain-note strong{color:var(--green-dark);}
+  #error-msg{display:none;background:var(--red-light);color:#A32D2D;border:1px solid #F09595;border-radius:var(--radius-sm);padding:0.75rem 1rem;font-size:13px;margin-top:1rem;text-align:left;}
 
-    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  /* APP */
+  #app{display:none;flex-direction:column;min-height:100vh;}
 
-    /* ── Layout Shell ─────────────────────────────────────── */
-    .app-header {
-      background: var(--green-dark);
-      padding: 0 28px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,.15);
-    }
-    .app-header .brand { display: flex; align-items: center; gap: 10px; }
-    .app-header .brand-dot { width: 10px; height: 10px; background: #4ade80; border-radius: 50%; }
-    .app-header h1 { color: #fff; font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
-    .app-header .refresh-info { font-size: 12px; color: rgba(255,255,255,.55); font-family: var(--mono); }
+  /* TOPNAV */
+  .topnav{background:var(--white);border-bottom:1px solid var(--gray-100);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .nav-left{display:flex;align-items:center;gap:10px;}
+  .nav-logo-mark{width:32px;height:32px;background:var(--green);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+  .nav-logo-mark svg{width:18px;height:18px;}
+  .nav-brand{font-size:15px;font-weight:600;color:var(--gray-900);letter-spacing:-0.2px;}
+  .nav-separator{color:var(--gray-200);font-size:18px;font-weight:300;margin:0 2px;}
+  .nav-page{font-size:14px;color:var(--gray-400);}
+  .nav-right{display:flex;align-items:center;gap:0.75rem;}
+  .nav-user{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--gray-100);background:var(--gray-50);transition:background 0.15s;}
+  .nav-user:hover{background:var(--gray-100);}
+  .nav-avatar{width:26px;height:26px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white;}
+  .nav-user-name{font-size:13px;font-weight:500;color:var(--gray-700);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .btn-logout{font-size:12px;color:var(--gray-400);background:none;border:1px solid var(--gray-200);padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit;transition:all 0.15s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);background:var(--red-light);}
 
-    /* ── Nav Tabs ─────────────────────────────────────────── */
-    .nav-bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 28px;
-      display: flex;
-      gap: 0;
-      overflow-x: auto;
-    }
-    .nav-bar::-webkit-scrollbar { display: none; }
-    .nav-tab {
-      padding: 14px 18px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      transition: color .15s, border-color .15s;
-      user-select: none;
-    }
-    .nav-tab:hover { color: var(--text); }
-    .nav-tab.active { color: var(--green); border-bottom-color: var(--green); }
+  /* MAIN */
+  .main{padding:1.5rem;flex:1;max-width:1400px;margin:0 auto;width:100%;}
 
-    /* ── Filter Bar ───────────────────────────────────────── */
-    .filter-bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 28px;
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .filter-group { display: flex; align-items: center; gap: 6px; }
-    .filter-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
-    select {
-      padding: 5px 28px 5px 10px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      font-size: 12px;
-      font-family: var(--font);
-      font-weight: 500;
-      color: var(--text);
-      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E") no-repeat right 9px center;
-      -webkit-appearance: none;
-      cursor: pointer;
-    }
-    select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,126,90,.12); }
+  /* PAGE HEADER */
+  .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem;}
+  .page-title{font-size:20px;font-weight:600;color:var(--gray-900);letter-spacing:-0.3px;}
+  .page-subtitle{font-size:13px;color:var(--gray-400);margin-top:2px;}
 
-    .btn-refresh {
-      margin-left: auto;
-      padding: 6px 16px;
-      background: var(--green);
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 12px;
-      font-family: var(--font);
-      font-weight: 700;
-      cursor: pointer;
-      letter-spacing: 0.3px;
-      transition: background .15s;
-    }
-    .btn-refresh:hover:not(:disabled) { background: var(--green-dark); }
-    .btn-refresh:disabled { opacity: .5; cursor: not-allowed; }
+  /* TABS */
+  .tab-row{display:flex;gap:4px;background:var(--gray-100);border-radius:var(--radius-sm);padding:3px;width:fit-content;}
+  .tab-btn{padding:6px 14px;font-size:13px;font-weight:500;border-radius:4px;border:none;cursor:pointer;background:transparent;color:var(--gray-400);font-family:inherit;transition:all 0.15s;}
+  .tab-btn.active{background:var(--white);color:var(--gray-900);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .tab-btn:hover:not(.active){color:var(--gray-700);}
 
-    /* ── Page Content ─────────────────────────────────────── */
-    .page { padding: 24px 28px; max-width: 1440px; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+  /* SUMMARY CARDS */
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.25rem;}
+  .summary-card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius);padding:1rem 1.25rem;box-shadow:var(--shadow);}
+  .summary-card-label{font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  .summary-card-value{font-size:26px;font-weight:600;color:var(--gray-900);letter-spacing:-0.5px;line-height:1;margin-bottom:4px;}
+  .summary-card-delta{font-size:12px;font-weight:500;}
+  .delta-pos{color:var(--green);} .delta-neg{color:var(--red);} .delta-neu{color:var(--gray-400);}
+  .card-accent-green{border-top:3px solid var(--green);}
+  .card-accent-purple{border-top:3px solid var(--purple);}
+  .card-accent-amber{border-top:3px solid #EF9F27;}
+  .card-accent-red{border-top:3px solid var(--red);}
 
-    /* ── Status Banner ────────────────────────────────────── */
-    .status-banner {
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 18px;
-      display: none;
-    }
-    .status-banner.loading { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
-    .status-banner.error   { background: var(--red-light); color: #991b1b; border: 1px solid #fca5a5; }
-    .status-banner.ok      { background: var(--green-light); color: var(--green-dark); border: 1px solid #a7f3d0; }
+  /* FILTER BAR */
+  .filter-bar{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius);padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.875rem;flex-wrap:wrap;margin-bottom:1.25rem;box-shadow:var(--shadow);}
+  .filter-label{font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+  .filter-group{display:flex;align-items:center;gap:6px;}
+  .filter-select{font-family:inherit;font-size:13px;font-weight:500;color:var(--gray-900);background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:5px 28px 5px 10px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888780' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color 0.15s;min-width:110px;}
+  .filter-select:hover,.filter-select:focus{border-color:var(--green);outline:none;}
+  .filter-divider{width:1px;height:24px;background:var(--gray-100);}
+  .btn-refresh{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;color:var(--green-dark);background:var(--green-light);border:1px solid #9FE1CB;padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s;}
+  .btn-refresh:hover{background:#9FE1CB;}
+  .btn-refresh svg{width:14px;height:14px;}
+  .btn-refresh.loading svg{animation:spin 0.7s linear infinite;}
 
-    /* ── Metric Cards ─────────────────────────────────────── */
-    .cards-row {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    @media (max-width: 1280px) { .cards-row { grid-template-columns: repeat(4, 1fr); } }
-    @media (max-width: 640px)  { .cards-row { grid-template-columns: repeat(2, 1fr); } }
+  /* TABLE CARD */
+  .table-card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-bottom:1.25rem;}
+  .table-card-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--gray-100);flex-wrap:wrap;gap:0.75rem;}
+  .table-card-title{font-size:14px;font-weight:600;color:var(--gray-900);}
+  .table-search{font-family:inherit;font-size:13px;color:var(--gray-900);background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:5px 32px 5px 10px;width:220px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888780' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:border-color 0.15s;}
+  .table-search:focus{outline:none;border-color:var(--green);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead tr{background:var(--gray-50);border-bottom:1px solid var(--gray-100);}
+  th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;cursor:pointer;user-select:none;transition:color 0.15s;}
+  th:hover{color:var(--gray-700);}
+  th.sort-asc::after{content:' ↑';}
+  th.sort-desc::after{content:' ↓';}
+  tbody tr{border-bottom:1px solid var(--gray-100);transition:background 0.1s;}
+  tbody tr:hover{background:var(--gray-50);}
+  tbody tr:last-child{border-bottom:none;}
+  td{padding:9px 12px;color:var(--gray-700);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+  td.mono{font-family:'Courier New',monospace;font-size:12px;color:var(--gray-900);font-weight:600;}
+  td.primary{color:var(--gray-900);}
+  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge-good{background:var(--green-light);color:var(--green-text);}
+  .badge-bad{background:var(--red-light);color:#791F1F;}
+  .badge-b2b{background:var(--purple-light);color:var(--purple-dark);}
+  .badge-b2c{background:var(--amber-light);color:#633806;}
+  .badge-mm{background:#E6F1FB;color:#0C447C;}
+  .badge-bb{background:#FBEAF0;color:#72243E;}
+  .badge-lj{background:#EAF3DE;color:#27500A;}
+  .qty-pos{color:var(--green-dark);font-weight:600;}
+  .qty-neg{color:#A32D2D;font-weight:600;}
 
-    .metric-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      box-shadow: var(--shadow);
-      border-top: 3px solid var(--border);
-      transition: box-shadow .15s;
-    }
-    .metric-card:hover { box-shadow: var(--shadow-md); }
-    .metric-card.add     { border-top-color: var(--green); }
-    .metric-card.remove  { border-top-color: var(--red); }
-    .metric-card.net     { border-top-color: var(--blue); }
-    .metric-card.good    { border-top-color: #2563eb; }
-    .metric-card.bad     { border-top-color: var(--amber); }
-    .metric-card.fac     { border-top-color: #7c3aed; }
+  /* EMPTY / LOADING */
+  .empty-state{text-align:center;padding:4rem 2rem;color:var(--gray-400);}
+  .empty-icon{font-size:2.5rem;margin-bottom:1rem;}
+  .empty-state h3{font-size:15px;font-weight:600;color:var(--gray-700);margin-bottom:0.5rem;}
+  .empty-state p{font-size:13px;line-height:1.6;}
+  .loading-row td{text-align:center;color:var(--gray-400);padding:3rem;}
 
-    .metric-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .metric-value {
-      font-family: var(--mono);
-      font-size: 22px;
-      font-weight: 500;
-      line-height: 1;
-      color: var(--text);
-    }
-    .metric-value.c-add    { color: var(--green); }
-    .metric-value.c-remove { color: var(--red); }
-    .metric-value.c-pos    { color: var(--green); }
-    .metric-value.c-neg    { color: var(--red); }
-    .metric-value.c-good   { color: #1d4ed8; }
-    .metric-value.c-bad    { color: var(--amber); }
+  /* PAGINATION */
+  .table-footer{display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;border-top:1px solid var(--gray-100);background:var(--gray-50);font-size:12px;color:var(--gray-400);}
+  .pagination{display:flex;gap:4px;}
+  .page-btn{width:28px;height:28px;border-radius:5px;border:1px solid var(--gray-200);background:var(--white);cursor:pointer;font-size:12px;font-weight:500;color:var(--gray-700);font-family:inherit;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+  .page-btn:hover{border-color:var(--green);color:var(--green-dark);}
+  .page-btn.active{background:var(--green);border-color:var(--green);color:white;}
+  .page-btn:disabled{opacity:0.4;cursor:default;}
 
-    /* ── Charts Grid ──────────────────────────────────────── */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+  /* STATUS BAR */
+  .status-bar{background:var(--white);border-top:1px solid var(--gray-100);padding:0.5rem 1.5rem;font-size:11.5px;color:var(--gray-400);display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+  .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;}
+  .dot-live{background:var(--green);} .dot-idle{background:var(--gray-200);} .dot-error{background:var(--red);}
 
-    .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      box-shadow: var(--shadow);
-    }
-    .chart-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--muted);
-      margin-bottom: 14px;
-    }
-    .chart-wrap { position: relative; height: 220px; }
+  /* SPINNER */
+  .spinner{width:18px;height:18px;border:2px solid var(--gray-100);border-top-color:var(--green);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-    /* ── Table Card ───────────────────────────────────────── */
-    .table-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-      margin-bottom: 16px;
-    }
-    .table-header {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .table-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
-    .table-count { font-size: 12px; color: var(--muted); }
+  /* REMARKS */
+  .remarks-btn{font-size:11px;color:var(--purple-dark);background:var(--purple-light);border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;}
+  .remarks-btn:hover{background:#CECBF6;}
 
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th {
-      padding: 8px 12px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      border-bottom: 2px solid var(--border);
-      background: #fafbfc;
-      white-space: nowrap;
-    }
-    tbody td { padding: 9px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover td { background: #f9fafb; }
-
-    .mono { font-family: var(--mono); font-size: 12px; }
-    .sku-code { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--green-dark); }
-    .item-name { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-    /* ── Badges ───────────────────────────────────────────── */
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .badge-add     { background: #dcfce7; color: #166534; }
-    .badge-remove  { background: var(--red-light); color: #991b1b; }
-    .badge-pending { background: #fef9c3; color: #854d0e; }
-    .badge-ok      { background: var(--green-light); color: var(--green-dark); }
-    .badge-mm      { background: #dcfce7; color: #166534; }
-    .badge-bb      { background: #fce7f3; color: #9d174d; }
-    .badge-lj      { background: #fff7ed; color: #c2410c; }
-
-    /* ── SKU Review remark form ───────────────────────────── */
-    tr.sku-row { cursor: pointer; }
-    tr.sku-row:hover td { background: #f0f7f4 !important; }
-    tr.remark-expand { display: none; }
-    tr.remark-expand.open { display: table-row; }
-    .remark-form-inner {
-      padding: 12px 14px;
-      background: #f8fffe;
-      border: 1px solid #a7f3d0;
-      border-radius: 6px;
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-    .remark-form-inner input {
-      flex: 0 0 160px;
-      padding: 7px 10px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      font-family: var(--font);
-      font-size: 13px;
-    }
-    .remark-form-inner textarea {
-      flex: 1 1 280px;
-      padding: 7px 10px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      font-family: var(--font);
-      font-size: 13px;
-      resize: vertical;
-      height: 60px;
-    }
-    .remark-form-inner input:focus,
-    .remark-form-inner textarea:focus { outline: none; border-color: var(--green); }
-    .btn-save-remark {
-      padding: 8px 18px;
-      background: var(--green);
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-family: var(--font);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      align-self: flex-end;
-      transition: background .15s;
-    }
-    .btn-save-remark:hover { background: var(--green-dark); }
-
-    /* ── Net delta ────────────────────────────────────────── */
-    .net-pos { color: var(--green); font-weight: 600; font-family: var(--mono); font-size: 13px; }
-    .net-neg { color: var(--red);   font-weight: 600; font-family: var(--mono); font-size: 13px; }
-    .split-detail { font-size: 11px; color: var(--muted); line-height: 1.6; font-family: var(--mono); }
-
-    /* ── Empty / Loading states ───────────────────────────── */
-    .empty-state { text-align: center; padding: 52px 24px; color: var(--muted); }
-    .empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; }
-    .empty-state p { font-size: 14px; }
-
-    .spinner-wrap { display: flex; justify-content: center; padding: 52px; }
-    .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--border);
-      border-top-color: var(--green);
-      border-radius: 50%;
-      animation: spin .75s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+  @media(max-width:700px){
+    .main{padding:1rem;}
+    .filter-select{min-width:90px;}
+    .table-search{width:150px;}
+    th,td{padding:7px 8px;}
+    .summary-card-value{font-size:22px;}
+  }
+</style>
 </head>
 <body>
 
-<!-- ── Header ───────────────────────────────────────────────── -->
-<header class="app-header">
-  <div class="brand">
-    <div class="brand-dot"></div>
-    <h1>Mosaic Wellness · Batch Adjustment</h1>
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span class="login-logo-text">Mosaic Wellness</span>
+    </div>
+    <div class="login-subtitle">Internal Tool</div>
+    <div class="login-title">Batch Adjustment</div>
+    <div class="login-desc">Sign in with your Mosaic Wellness work account to access inventory data.</div>
+    <div id="g_id_onload"
+         data-client_id="584700995754-gvqv21b5f7fmogc2o9itn1acgbgo0tvj.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-shape="rectangular"
+         data-theme="outline"
+         data-text="signin_with"
+         data-size="large"
+         data-logo_alignment="left"
+         data-width="320">
+    </div>
+    <div id="error-msg"></div>
+    <div class="login-domain-note">
+      <strong>🔒 Restricted access</strong> — Only <strong>@mosaicwellness.in</strong> accounts are permitted.
+    </div>
   </div>
-  <span class="refresh-info" id="last-refresh">—</span>
-</header>
-
-<!-- ── Nav Tabs ─────────────────────────────────────────────── -->
-<nav class="nav-bar">
-  <div class="nav-tab active" data-tab="yesterday" data-period="yesterday">Yesterday</div>
-  <div class="nav-tab"        data-tab="wtd"       data-period="wtd"      >Week-to-Date</div>
-  <div class="nav-tab"        data-tab="mtd"       data-period="mtd"      >Month-to-Date</div>
-  <div class="nav-tab"        data-tab="skureview" data-period="mtd"      >SKU Review</div>
-  <div class="nav-tab"        data-tab="prohibited" data-period=""        >Prohibited</div>
-</nav>
-
-<!-- ── Filter Bar ───────────────────────────────────────────── -->
-<div class="filter-bar">
-  <div class="filter-group">
-    <label>Business Unit</label>
-    <select id="f-bu">
-      <option value="all">All BUs</option>
-      <option value="B2B">B2B</option>
-      <option value="B2C">B2C</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Brand</label>
-    <select id="f-brand">
-      <option value="all">All Brands</option>
-      <option value="Man Matters">Man Matters</option>
-      <option value="Be Bodywise">Be Bodywise</option>
-      <option value="Little Joys">Little Joys</option>
-    </select>
-  </div>
-  <div class="filter-group" id="inv-filter-wrap">
-    <label>Inv Type</label>
-    <select id="f-inv">
-      <option value="all">All Types</option>
-      <option value="good">Good</option>
-      <option value="bad">Bad</option>
-    </select>
-  </div>
-  <button class="btn-refresh" id="btn-refresh" onclick="reload()">↺ Refresh</button>
 </div>
 
-<!-- ── Main Content ─────────────────────────────────────────── -->
-<div class="page">
-  <div id="status-banner" class="status-banner"></div>
+<!-- APP -->
+<div id="app">
+  <nav class="topnav">
+    <div class="nav-left">
+      <div class="nav-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span class="nav-brand">Mosaic Wellness</span>
+      <span class="nav-separator">/</span>
+      <span class="nav-page">Batch Adjustment</span>
+    </div>
+    <div class="nav-right">
+      <div class="nav-user">
+        <div class="nav-avatar" id="nav-avatar">MW</div>
+        <span class="nav-user-name" id="nav-user-name">User</span>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sign out</button>
+    </div>
+  </nav>
 
-  <!-- Yesterday -->
-  <div class="tab-panel active" id="tab-yesterday">
-    <div class="cards-row"  id="cards-yesterday"></div>
-    <div class="charts-grid" id="charts-yesterday"></div>
-  </div>
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Inventory Batch Adjustments</div>
+        <div class="page-subtitle" id="date-subtitle">Loading…</div>
+      </div>
+      <div class="tab-row">
+        <button class="tab-btn active" data-period="yesterday">Yesterday</button>
+        <button class="tab-btn" data-period="wtd">Week-to-Date</button>
+        <button class="tab-btn" data-period="mtd">Month-to-Date</button>
+        <button class="tab-btn" data-period="skureview">SKU Review</button>
+      </div>
+    </div>
 
-  <!-- WTD -->
-  <div class="tab-panel" id="tab-wtd">
-    <div class="cards-row"  id="cards-wtd"></div>
-    <div class="charts-grid" id="charts-wtd"></div>
-  </div>
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card card-accent-green">
+        <div class="summary-card-label">Total Records</div>
+        <div class="summary-card-value" id="stat-total">—</div>
+        <div class="summary-card-delta delta-neu" id="stat-total-d">Awaiting data</div>
+      </div>
+      <div class="summary-card card-accent-purple">
+        <div class="summary-card-label">Good Inventory</div>
+        <div class="summary-card-value" id="stat-good">—</div>
+        <div class="summary-card-delta delta-pos" id="stat-good-d">—</div>
+      </div>
+      <div class="summary-card card-accent-red">
+        <div class="summary-card-label">Bad Inventory</div>
+        <div class="summary-card-value" id="stat-bad">—</div>
+        <div class="summary-card-delta delta-neg" id="stat-bad-d">—</div>
+      </div>
+      <div class="summary-card card-accent-amber">
+        <div class="summary-card-label">Net Qty Change</div>
+        <div class="summary-card-value" id="stat-qty">—</div>
+        <div class="summary-card-delta delta-neu" id="stat-qty-d">—</div>
+      </div>
+    </div>
 
-  <!-- MTD -->
-  <div class="tab-panel" id="tab-mtd">
-    <div class="cards-row"  id="cards-mtd"></div>
-    <div class="charts-grid" id="charts-mtd"></div>
-  </div>
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <span class="filter-label">Filters</span>
+      <div class="filter-group">
+        <label class="filter-label" for="f-bu">BU</label>
+        <select class="filter-select" id="f-bu">
+          <option value="">All BUs</option>
+          <option value="B2B">B2B</option>
+          <option value="B2C">B2C</option>
+        </select>
+      </div>
+      <div class="filter-divider"></div>
+      <div class="filter-group">
+        <label class="filter-label" for="f-brand">Brand</label>
+        <select class="filter-select" id="f-brand">
+          <option value="">All Brands</option>
+          <option value="Man Matters">Man Matters</option>
+          <option value="Be Bodywise">Be Bodywise</option>
+          <option value="Little Joys">Little Joys</option>
+        </select>
+      </div>
+      <div class="filter-divider"></div>
+      <div class="filter-group">
+        <label class="filter-label" for="f-inv">Inv Type</label>
+        <select class="filter-select" id="f-inv">
+          <option value="">All Types</option>
+          <option value="Good">Good</option>
+          <option value="Bad">Bad</option>
+        </select>
+      </div>
+      <div class="filter-divider"></div>
+      <div class="filter-group">
+        <label class="filter-label" for="f-facility">Facility</label>
+        <select class="filter-select" id="f-facility">
+          <option value="">All Facilities</option>
+        </select>
+      </div>
+      <button class="btn-refresh" id="btn-refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
 
-  <!-- SKU Review -->
-  <div class="tab-panel" id="tab-skureview">
-    <div id="sku-content"></div>
-  </div>
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <div class="table-card-title" id="table-title">Adjustment Records</div>
+        <input type="search" class="table-search" id="tbl-search" placeholder="Search SKU, item, batch…"/>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th data-col="Date">Date</th>
+              <th data-col="Facility">Facility</th>
+              <th data-col="BU">BU</th>
+              <th data-col="Brand">Brand</th>
+              <th data-col="SKU">SKU</th>
+              <th data-col="Item Name">Item Name</th>
+              <th data-col="Batch">Batch</th>
+              <th data-col="Type">Type</th>
+              <th data-col="Inv Type">Inv Type</th>
+              <th data-col="Qty">Qty</th>
+              <th data-col="Old Qty">Old Qty</th>
+              <th data-col="Username">User</th>
+              <th data-col="Remarks">Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr class="loading-row">
+              <td colspan="13"><div class="spinner"></div>Loading data…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <span id="row-count">—</span>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </main>
 
-  <!-- Prohibited -->
-  <div class="tab-panel" id="tab-prohibited">
-    <div id="prohibited-content"></div>
-  </div>
+  <footer class="status-bar">
+    <span><span class="status-dot dot-idle" id="status-dot"></span><span id="status-text">Not connected</span></span>
+    <span id="last-refresh">—</span>
+    <span>Source: Google Sheets via Apps Script · IST</span>
+  </footer>
 </div>
 
 <script>
-// ──────────────────────────────────────────────────────────────
-// CONFIG  ← update WEBAPP_URL if you redeploy
-// ──────────────────────────────────────────────────────────────
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz3PaJXilY7RGuG7rC1edbCu-Kl-xWfy5fHlYXktDRbXtHlzo8wUptW7gU7J_xqmZpJYw/exec';
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const WEBAPP_URL    = 'https://script.google.com/macros/s/AKfycbz3PaJXilY7RGuG7rC1edbCu-Kl-xWfy5fHlYXktDRbXtHlzo8wUptW7gU7J_xqmZpJYw/exec';
+const ALLOWED_DOMAIN = 'mosaicwellness.in';
+const ROWS_PER_PAGE  = 30;
 
-// Brand colours
-const BRANDS  = ['Man Matters', 'Be Bodywise', 'Little Joys', 'Other'];
-const BFILL   = { 'Man Matters': '#1a7e5a', 'Be Bodywise': '#db2777', 'Little Joys': '#ea580c', 'Other': '#94a3b8' };
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let allRows      = [];
+let filteredRows = [];
+let currentPage  = 1;
+let currentPeriod = 'yesterday';
+let sortCol      = '';
+let sortAsc      = true;
+let userInfo     = null;
 
-// Chart.js instances — destroyed before re-render to avoid canvas reuse error
-const charts = {};
-
-// ──────────────────────────────────────────────────────────────
-// JSONP  (30 s timeout · 3 auto-retries)
-// ──────────────────────────────────────────────────────────────
-function jsonpFetch(action, params, callback) {
-  const cbName = 'cb_' + Math.random().toString(36).slice(2, 10);
-  const qs = Object.entries(params)
-    .filter(([, v]) => v && v !== 'all')
-    .map(([k, v]) => '&' + k + '=' + encodeURIComponent(v))
-    .join('');
-  const url = WEBAPP_URL + '?action=' + action + '&callback=' + cbName + qs;
-
-  let attempts = 0;
-
-  function attempt() {
-    attempts++;
-    const script = document.createElement('script');
-    const timer  = setTimeout(() => {
-      cleanup();
-      if (attempts < 3) attempt();
-      else callback(null, 'Request timed out after 3 attempts');
-    }, 30000);
-
-    function cleanup() {
-      clearTimeout(timer);
-      script.remove();
-      delete window[cbName];
+// ═══════════════════════════════════════
+// SSO
+// ═══════════════════════════════════════
+function handleCredentialResponse(response) {
+  try {
+    const payload = parseJwt(response.credential);
+    const email   = payload.email || '';
+    const domain  = email.split('@')[1] || '';
+    if (domain !== ALLOWED_DOMAIN) {
+      showLoginError('Access denied. Only @' + ALLOWED_DOMAIN + ' accounts are permitted. You used: ' + email);
+      if (window.google) google.accounts.id.disableAutoSelect();
+      return;
     }
-
-    window[cbName]  = (data) => { cleanup(); callback(data, null); };
-    script.onerror  = ()     => { cleanup(); if (attempts < 3) attempt(); else callback(null, 'Script load failed'); };
-    script.src      = url;
-    document.head.appendChild(script);
+    userInfo = {
+      email    : email,
+      name     : payload.name || email,
+      initials : getInitials(payload.name || email)
+    };
+    hideLoginError();
+    enterApp();
+  } catch(e) {
+    showLoginError('Sign-in failed. Please try again.');
   }
-
-  attempt();
 }
 
-// ──────────────────────────────────────────────────────────────
-// STATE & TAB MANAGEMENT
-// ──────────────────────────────────────────────────────────────
-let activeTab    = 'yesterday';
-let activePeriod = 'yesterday';
+function parseJwt(token) {
+  const b64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(decodeURIComponent(atob(b64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+}
 
-document.querySelectorAll('.nav-tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.nav-tab, .tab-panel').forEach(el => el.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('tab-' + t.dataset.tab).classList.add('active');
-    activeTab    = t.dataset.tab;
-    activePeriod = t.dataset.period;
-    document.getElementById('inv-filter-wrap').style.display = activeTab === 'skureview' ? 'none' : '';
-    loadActive();
+function getInitials(name) {
+  const p = name.trim().split(' ');
+  return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideLoginError() {
+  document.getElementById('error-msg').style.display = 'none';
+}
+
+function enterApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('nav-user-name').textContent = userInfo.name;
+  document.getElementById('nav-avatar').textContent    = userInfo.initials;
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('date-subtitle').textContent =
+    'As of ' + new Date().toLocaleDateString('en-IN', opts);
+  loadData();
+}
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  if (window.google) google.accounts.id.disableAutoSelect();
+  allRows = []; filteredRows = []; userInfo = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+});
+
+// ═══════════════════════════════════════
+// JSONP FETCH — calls your existing API
+// ═══════════════════════════════════════
+function jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    const url = WEBAPP_URL + '?' + Object.entries(Object.assign({ callback: cbName }, params))
+      .map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup(); reject(new Error('Request timed out'));
+    }, 15000);
+    window[cbName] = (data) => { clearTimeout(timer); cleanup(); resolve(data); };
+    script.onerror = () => { clearTimeout(timer); cleanup(); reject(new Error('Network error')); };
+    function cleanup() { delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); }
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
+// ═══════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════
+async function loadData(force) {
+  setStatus('idle', 'Fetching…');
+  setRefreshLoading(true);
+  showLoadingRow();
+
+  try {
+    // Build params for _getRows — matches your existing API params
+    const params = { action: 'rows', period: currentPeriod };
+    const bu    = document.getElementById('f-bu').value;
+    const brand = document.getElementById('f-brand').value;
+    const inv   = document.getElementById('f-inv').value;
+    if (bu)    params.bu    = bu;
+    if (brand) params.brand = brand;
+    if (inv)   params.inv   = inv;
+
+    const result = await jsonp(params);
+
+    if (!result.ok) throw new Error(result.error || 'API returned ok:false');
+
+    // result.rows is array of arrays, result.headers is the header array
+    const headers = result.headers || [];
+    allRows = (result.rows || []).map(row => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ''; });
+      return obj;
+    });
+
+    // Populate facility filter dynamically
+    populateFacilityFilter();
+
+    applyClientFilters();
+    loadSummary();
+    setStatus('live', 'Connected · ' + allRows.length + ' records loaded');
+    document.getElementById('last-refresh').textContent =
+      'Last refreshed: ' + new Date().toLocaleTimeString('en-IN');
+
+  } catch(err) {
+    showErrorRow(err.message);
+    setStatus('error', 'Error: ' + err.message);
+    console.error(err);
+  } finally {
+    setRefreshLoading(false);
+  }
+}
+
+// Load summary cards from _getSummary action
+async function loadSummary() {
+  try {
+    const params = { action: 'summary', period: currentPeriod };
+    const bu    = document.getElementById('f-bu').value;
+    const brand = document.getElementById('f-brand').value;
+    if (bu)    params.bu    = bu;
+    if (brand) params.brand = brand;
+    const result = await jsonp(params);
+    if (result.ok && result.summary) {
+      const s = result.summary;
+      setCard('stat-total',  s.total   || allRows.length, 'Total rows');
+      setCard('stat-good',   s.good    || countByInv('Good'), countPct(s.good || countByInv('Good'), s.total || allRows.length) + '% of total');
+      setCard('stat-bad',    s.bad     || countByInv('Bad'),  countPct(s.bad  || countByInv('Bad'),  s.total || allRows.length) + '% of total');
+      setCard('stat-qty',    fmtQty(s.netQty || sumQty()), s.netQty >= 0 ? 'Net positive' : 'Net negative');
+    } else {
+      updateSummaryFromRows();
+    }
+  } catch(e) {
+    updateSummaryFromRows();
+  }
+}
+
+function updateSummaryFromRows() {
+  const total = allRows.length;
+  const good  = countByInv('Good');
+  const bad   = countByInv('Bad');
+  const net   = sumQty();
+  setCard('stat-total', total, total > 0 ? 'Records loaded' : 'No data yet');
+  setCard('stat-good',  good,  countPct(good, total) + '% of total');
+  setCard('stat-bad',   bad,   countPct(bad, total)  + '% of total');
+  setCard('stat-qty',   fmtQty(net), net >= 0 ? 'Net positive' : 'Net negative');
+}
+
+function setCard(id, val, delta) {
+  document.getElementById(id).textContent = typeof val === 'number' ? val.toLocaleString('en-IN') : val;
+  const d = document.getElementById(id + '-d');
+  if (d) d.textContent = delta;
+}
+
+function countByInv(type) { return allRows.filter(r => r['Inv Type'] === type).length; }
+function sumQty() { return allRows.reduce((s, r) => s + (parseFloat(r['Qty']) || 0), 0); }
+function countPct(n, t) { return t > 0 ? Math.round((n/t)*100) : 0; }
+function fmtQty(n) { return (n >= 0 ? '+' : '') + Math.round(n).toLocaleString('en-IN'); }
+
+// ═══════════════════════════════════════
+// CLIENT-SIDE FILTER (search + facility)
+// ═══════════════════════════════════════
+function applyClientFilters() {
+  const search   = document.getElementById('tbl-search').value.toLowerCase();
+  const facility = document.getElementById('f-facility').value;
+
+  filteredRows = allRows.filter(r => {
+    if (facility && r['Facility'] !== facility) return false;
+    if (search) {
+      const hay = [r['SKU'], r['Item Name'], r['Batch'], r['Username'], r['Remarks']]
+        .map(v => String(v||'')).join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+// ═══════════════════════════════════════
+// FACILITY FILTER (dynamic)
+// ═══════════════════════════════════════
+function populateFacilityFilter() {
+  const sel = document.getElementById('f-facility');
+  const current = sel.value;
+  const facilities = [...new Set(allRows.map(r => r['Facility']).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All Facilities</option>' +
+    facilities.map(f => `<option value="${esc(f)}"${f===current?' selected':''}>${esc(f)}</option>`).join('');
+}
+
+// ═══════════════════════════════════════
+// RENDER TABLE
+// ═══════════════════════════════════════
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  if (!filteredRows.length) {
+    tbody.innerHTML = `<tr><td colspan="13">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No records found</h3>
+        <p>Try adjusting your filters, or data may not have arrived yet.<br>Emails are picked up automatically after 10:00 AM IST.</p>
+      </div></td></tr>`;
+    document.getElementById('row-count').textContent = '0 records';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  const start    = (currentPage - 1) * ROWS_PER_PAGE;
+  const pageRows = filteredRows.slice(start, start + ROWS_PER_PAGE);
+
+  tbody.innerHTML = pageRows.map(r => {
+    const qty    = parseFloat(r['Qty']) || 0;
+    const brand  = r['Brand'] || '';
+    const bu     = r['BU']    || '';
+    const inv    = r['Inv Type'] || '';
+    const brandCls = brand.includes('Man') ? 'badge-mm' : brand.includes('Body') ? 'badge-bb' : brand.includes('Joy') ? 'badge-lj' : '';
+
+    return `<tr>
+      <td>${esc(r['Date']||r['Email Date']||'')}</td>
+      <td>${esc(r['Facility']||'')}</td>
+      <td><span class="badge ${bu==='B2B'?'badge-b2b':'badge-b2c'}">${esc(bu||'—')}</span></td>
+      <td><span class="badge ${brandCls}">${esc(brand||'—')}</span></td>
+      <td class="mono">${esc(r['SKU']||'—')}</td>
+      <td class="primary" style="max-width:180px">${esc(r['Item Name']||'—')}</td>
+      <td class="mono" style="font-size:11px">${esc(r['Batch']||'—')}</td>
+      <td>${esc(r['Type']||'—')}</td>
+      <td><span class="badge ${inv==='Good'?'badge-good':'badge-bad'}">${esc(inv||'—')}</span></td>
+      <td class="${qty>=0?'qty-pos':'qty-neg'}">${qty>=0?'+':''}${qty.toLocaleString('en-IN')}</td>
+      <td>${esc(r['Old Qty']||'—')}</td>
+      <td style="font-size:12px">${esc(r['Username']||'—')}</td>
+      <td style="max-width:160px;font-size:12px;color:var(--gray-400)">${esc(r['Remarks']||'')}</td>
+    </tr>`;
+  }).join('');
+
+  const total = filteredRows.length;
+  const totalPages = Math.ceil(total / ROWS_PER_PAGE);
+  document.getElementById('row-count').textContent =
+    total.toLocaleString('en-IN') + ' records · page ' + currentPage + ' of ' + totalPages;
+  renderPagination(totalPages);
+}
+
+// ═══════════════════════════════════════
+// PAGINATION
+// ═══════════════════════════════════════
+function renderPagination(totalPages) {
+  const c = document.getElementById('pagination');
+  if (totalPages <= 1) { c.innerHTML=''; return; }
+  let h = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for (let p=1; p<=totalPages; p++) {
+    if (p===1||p===totalPages||(p>=currentPage-2&&p<=currentPage+2)) {
+      h += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    } else if (p===currentPage-3||p===currentPage+3) {
+      h += `<span style="display:flex;align-items:center;padding:0 2px;color:var(--gray-400);font-size:12px">…</span>`;
+    }
+  }
+  h += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  c.innerHTML = h;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filteredRows.length / ROWS_PER_PAGE);
+  if (p<1||p>total) return;
+  currentPage = p;
+  renderTable();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════
+// SORT
+// ═══════════════════════════════════════
+document.querySelectorAll('th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+    document.querySelectorAll('th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+    th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+    const numCols = ['Qty','Old Qty'];
+    filteredRows.sort((a,b) => {
+      let va = a[col]??'', vb = b[col]??'';
+      if (numCols.includes(col)) { va=parseFloat(va)||0; vb=parseFloat(vb)||0; return sortAsc?va-vb:vb-va; }
+      return sortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+    currentPage = 1;
+    renderTable();
   });
 });
 
-['f-bu', 'f-brand', 'f-inv'].forEach(id =>
-  document.getElementById(id).addEventListener('change', () => loadActive())
-);
-
-function reload()  { loadActive(true); }
-
-function loadActive() {
-  const f = { bu: document.getElementById('f-bu').value, brand: document.getElementById('f-brand').value, inv: document.getElementById('f-inv').value };
-  if      (activeTab === 'prohibited') loadProhibited();
-  else if (activeTab === 'skureview')  loadSkuReview(f);
-  else                                  loadSummary(activePeriod, f);
-}
-
-// ──────────────────────────────────────────────────────────────
-// SUMMARY (Yesterday / WTD / MTD)
-// ──────────────────────────────────────────────────────────────
-function loadSummary(period, filters) {
-  setLoading('Fetching ' + period + ' data…');
-  jsonpFetch('summary', { period, ...filters }, (data, err) => {
-    if (err || !data || !data.ok) { setError(err || (data && data.error) || 'Unknown error'); return; }
-    clearStatus();
-    renderSummary(period, data);
-    setRefresh();
+// ═══════════════════════════════════════
+// PERIOD TABS
+// ═══════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+    const labels = {yesterday:"Yesterday's Adjustments",wtd:'Week-to-Date Adjustments',mtd:'Month-to-Date Adjustments',skureview:'SKU Review'};
+    document.getElementById('table-title').textContent = labels[currentPeriod]||'Records';
+    loadData();
   });
-}
+});
 
-function renderSummary(period, data) {
-  const key = period === 'yesterday' ? 'yesterday' : period;
-  const m   = data.metrics || {};
-  const net = (m.totalAdd || 0) - (m.totalRemove || 0);
+// ═══════════════════════════════════════
+// SERVER-SIDE FILTERS — reload from API
+// ═══════════════════════════════════════
+['f-bu','f-brand','f-inv'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => { loadData(); });
+});
 
-  // ── Metric cards
-  document.getElementById('cards-' + key).innerHTML = [
-    metricCard('Total Add',    fmt(m.totalAdd),    'add',    'c-add'),
-    metricCard('Total Remove', fmt(m.totalRemove), 'remove', 'c-remove'),
-    metricCard('Net Movement', (net >= 0 ? '+' : '') + fmt(net), 'net', net >= 0 ? 'c-pos' : 'c-neg'),
-    metricCard('Good Add',     fmt(m.goodAdd),     'good',   'c-good'),
-    metricCard('Good Remove',  fmt(m.goodRemove),  'good',   'c-good'),
-    metricCard('Bad Add',      fmt(m.badAdd),      'bad',    'c-bad'),
-    metricCard('Bad Remove',   fmt(m.badRemove),   'bad',    'c-bad'),
-    metricCard('Facilities',   m.facilities || 0,  'fac',    '')
-  ].join('');
+// Client-side only (no API call needed)
+document.getElementById('f-facility').addEventListener('change', applyClientFilters);
+document.getElementById('tbl-search').addEventListener('input',  applyClientFilters);
+document.getElementById('btn-refresh').addEventListener('click', () => loadData(true));
 
-  // ── Charts
-  const cg = document.getElementById('charts-' + key);
-  cg.innerHTML = `
-    <div class="chart-card"><div class="chart-title">Day-on-Day Add vs Remove</div><div class="chart-wrap"><canvas id="c-dod-${key}"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Brand Contribution</div><div class="chart-wrap"><canvas id="c-brand-${key}"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Quantity by Business Unit</div><div class="chart-wrap"><canvas id="c-bu-${key}"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Good vs Bad Inventory</div><div class="chart-wrap"><canvas id="c-gb-${key}"></canvas></div></div>
-  `;
-
-  renderDod(key,   data.byDate || {});
-  renderBrand(key, data.byBrand || {});
-  renderBu(key,    data.byBu || {});
-  renderGb(key,    m);
-}
-
-function metricCard(label, value, cardClass, valClass) {
-  return `<div class="metric-card ${cardClass}">
-    <div class="metric-label">${label}</div>
-    <div class="metric-value ${valClass}">${value}</div>
-  </div>`;
-}
-
-// ── Chart: Day-on-Day ──────────────────────────────────────
-function renderDod(key, byDate) {
-  const id = 'c-dod-' + key;
-  destroyChart(id);
-  const labels = Object.keys(byDate).sort();
-  const adds   = labels.map(d => byDate[d].add || 0);
-  const rems   = labels.map(d => byDate[d].remove || 0);
-  const maxVal = Math.max(...adds, ...rems, 1);
-
-  charts[id] = new Chart(document.getElementById(id), {
-    type: 'bar',
-    plugins: [barLabelPlugin(maxVal, 0.05)],
-    data: {
-      labels,
-      datasets: [
-        { label: 'Add',    data: adds, backgroundColor: '#1a7e5a', borderRadius: 3 },
-        { label: 'Remove', data: rems, backgroundColor: '#d63c3c', borderRadius: 3 }
-      ]
-    },
-    options: chartOpts({ tooltip: { mode: 'index' }, yCallback: fmt })
-  });
-}
-
-// ── Chart: Brand ───────────────────────────────────────────
-function renderBrand(key, byBrand) {
-  const id = 'c-brand-' + key;
-  destroyChart(id);
-  const brands = BRANDS.filter(b => byBrand[b]);
-  const datasets = brands.map(b => ({
-    label           : b,
-    data            : [byBrand[b]?.add || 0, byBrand[b]?.remove || 0],
-    backgroundColor : BFILL[b] || '#94a3b8',
-    stack           : 'stack',
-    borderRadius    : 2
-  }));
-
-  charts[id] = new Chart(document.getElementById(id), {
-    type: 'bar',
-    data: { labels: ['Add', 'Remove'], datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
-      scales: {
-        x: { stacked: true, grid: { display: false } },
-        y: { stacked: true, beginAtZero: true, ticks: { callback: fmt, font: { size: 11 } }, grid: { color: '#f0f0f0' } }
-      }
-    }
-  });
-}
-
-// ── Chart: BU ──────────────────────────────────────────────
-function renderBu(key, byBu) {
-  const id = 'c-bu-' + key;
-  destroyChart(id);
-  const labels = Object.keys(byBu);
-  charts[id] = new Chart(document.getElementById(id), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Add',    data: labels.map(b => byBu[b].add    || 0), backgroundColor: '#1a7e5a', borderRadius: 3 },
-        { label: 'Remove', data: labels.map(b => byBu[b].remove || 0), backgroundColor: '#d63c3c', borderRadius: 3 }
-      ]
-    },
-    options: { ...chartOpts({ yCallback: fmt }), indexAxis: 'y' }
-  });
-}
-
-// ── Chart: Good vs Bad ─────────────────────────────────────
-function renderGb(key, m) {
-  const id = 'c-gb-' + key;
-  destroyChart(id);
-  charts[id] = new Chart(document.getElementById(id), {
-    type: 'bar',
-    data: {
-      labels  : ['Good Add', 'Good Remove', 'Bad Add', 'Bad Remove'],
-      datasets: [{ data: [m.goodAdd || 0, m.goodRemove || 0, m.badAdd || 0, m.badRemove || 0], backgroundColor: ['#16a34a','#dc2626','#2563eb','#d97706'], borderRadius: 3 }]
-    },
-    options: { ...chartOpts({ yCallback: fmt, legend: false }), indexAxis: 'y' }
-  });
-}
-
-function chartOpts({ tooltip, yCallback, legend = true } = {}) {
-  return {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend  : legend  ? { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } : { display: false },
-      tooltip : tooltip || {}
-    },
-    scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-      y: { beginAtZero: true, ticks: { callback: yCallback || (v => v), font: { size: 11 } }, grid: { color: '#f0f0f0' } }
-    }
-  };
-}
-
-// Data labels plugin — only for bars ≥ threshold % of max
-function barLabelPlugin(maxVal, threshold) {
-  return {
-    id: 'barLabel',
-    afterDraw(chart) {
-      const ctx = chart.ctx;
-      chart.data.datasets.forEach((ds, di) => {
-        chart.getDatasetMeta(di).data.forEach((bar, i) => {
-          const v = ds.data[i];
-          if (!v || v < maxVal * threshold) return;
-          ctx.save();
-          ctx.fillStyle = '#374151';
-          ctx.font = '10px "Plus Jakarta Sans", sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-          ctx.fillText(fmt(v), bar.x, bar.y - 2);
-          ctx.restore();
-        });
-      });
-    }
-  };
-}
-
-function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
-
-// ──────────────────────────────────────────────────────────────
-// SKU REVIEW
-// ──────────────────────────────────────────────────────────────
-function loadSkuReview(filters) {
-  setLoading('Loading SKU review…');
-  jsonpFetch('skureview', { period: 'mtd', bu: filters.bu, brand: filters.brand }, (data, err) => {
-    if (err || !data || !data.ok) { setError(err || (data && data.error) || 'Unknown error'); return; }
-    clearStatus();
-    renderSkuReview(data);
-    setRefresh();
-  });
-}
-
-function renderSkuReview(data) {
-  const el = document.getElementById('sku-content');
-  if (!data.skus || data.skus.length === 0) {
-    el.innerHTML = `<div class="table-card">
-      <div class="table-header">
-        <span class="table-title">SKU Review — Unbalanced SKUs (MTD)</span>
-      </div>
-      <div class="empty-state"><div class="empty-icon">✓</div><p>All SKUs balanced — no discrepancies found</p></div>
-    </div>`;
-    return;
-  }
-
-  const rows = data.skus.map((s, i) => `
-    <tr class="sku-row" onclick="toggleRemarkRow(${i})">
-      <td>${esc(s.facility || '—')}</td>
-      <td>${esc(s.bu || '—')}</td>
-      <td><span class="badge ${brandBadge(s.brand)}">${esc(s.brand || '—')}</span></td>
-      <td><div class="sku-code">${esc(s.sku)}</div><div class="item-name">${esc(s.itemName || '')}</div></td>
-      <td class="split-detail">G: +${fmt(s.goodAdd)} / −${fmt(s.goodRemove)}<br>B: +${fmt(s.badAdd)} / −${fmt(s.badRemove)}</td>
-      <td class="${s.net >= 0 ? 'net-pos' : 'net-neg'}">${s.net > 0 ? '+' : ''}${fmt(s.net)}</td>
-      <td><span class="badge badge-pending">Review</span></td>
-    </tr>
-    <tr class="remark-expand" id="remark-row-${i}">
-      <td colspan="7" style="padding:8px 12px;">
-        <div class="remark-form-inner">
-          <input id="rm-name-${i}" type="text" placeholder="Your name" />
-          <textarea id="rm-text-${i}" placeholder="Reason for discrepancy…"></textarea>
-          <button class="btn-save-remark" onclick="submitRemark(event,${i},'${esc(s.facility)}','${esc(s.sku)}',${s.net})">Save Remark</button>
-        </div>
-      </td>
-    </tr>`).join('');
-
-  el.innerHTML = `<div class="table-card">
-    <div class="table-header">
-      <span class="table-title">SKU Review — Unbalanced SKUs (MTD)</span>
-      <span class="table-count">${data.discrepantCount} unbalanced · ${data.totalSkus} total · Click row to remark</span>
-    </div>
-    <table>
-      <thead><tr>
-        <th>Facility</th><th>BU</th><th>Brand</th>
-        <th>SKU / Item</th><th>Good / Bad Split</th><th>Net Δ</th><th>Status</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>`;
-}
-
-function toggleRemarkRow(i) {
-  const row = document.getElementById('remark-row-' + i);
-  if (row) row.classList.toggle('open');
-}
-
-function submitRemark(e, idx, facility, sku, net) {
-  e.stopPropagation();
-  const name = document.getElementById('rm-name-' + idx).value.trim();
-  const text = document.getElementById('rm-text-' + idx).value.trim();
-  if (!name || !text) { alert('Please fill in both name and remark.'); return; }
-
-  jsonpFetch('saveRemark', { name, facility, tags: 'SKU Discrepancy', remarkText: text, dateRef: sku + ' | net:' + net }, (data, err) => {
-    if (err || !data || !data.ok) { alert('Save failed: ' + (err || data?.error)); return; }
-    document.getElementById('remark-row-' + idx).classList.remove('open');
-    alert('Remark saved ✓');
-  });
-}
-
-function brandBadge(brand) {
-  if (!brand) return '';
-  if (brand.includes('Man'))  return 'badge-mm';
-  if (brand.includes('Body')) return 'badge-bb';
-  if (brand.includes('Joy'))  return 'badge-lj';
-  return '';
-}
-
-// ──────────────────────────────────────────────────────────────
-// PROHIBITED
-// ──────────────────────────────────────────────────────────────
-function loadProhibited() {
-  setLoading('Loading prohibited cases…');
-  jsonpFetch('prohibited', {}, (data, err) => {
-    if (err || !data || !data.ok) { setError(err || (data && data.error) || 'Unknown error'); return; }
-    clearStatus();
-    renderProhibited(data);
-    setRefresh();
-  });
-}
-
-function renderProhibited(data) {
-  const el = document.getElementById('prohibited-content');
-  if (!data.rows || data.rows.length === 0) {
-    el.innerHTML = `<div class="table-card">
-      <div class="table-header"><span class="table-title">Prohibited Cases (REPLACE)</span></div>
-      <div class="empty-state"><div class="empty-icon">✓</div><p>No prohibited cases on record</p></div>
-    </div>`;
-    return;
-  }
-
-  const rows = data.rows.map(r => `
-    <tr>
-      <td class="mono">${esc(r[0] || '—')}</td>
-      <td>${esc(r[2] || '—')}</td>
-      <td><span class="badge ${brandBadge(r[4])}">${esc(r[4] || '—')}</span></td>
-      <td><div class="sku-code">${esc(r[5] || '—')}</div><div class="item-name">${esc(r[6] || '')}</div></td>
-      <td class="mono">${esc(r[9] || '0')}</td>
-      <td class="mono">${esc(r[10] || '—')}</td>
-      <td><span class="badge ${r[14] === 'Resolved' ? 'badge-ok' : 'badge-pending'}">${esc(r[14] || 'Pending')}</span></td>
-    </tr>`).join('');
-
-  el.innerHTML = `<div class="table-card">
-    <div class="table-header">
-      <span class="table-title">Prohibited Cases (REPLACE)</span>
-      <span class="table-count" style="color:#dc2626;">${data.count} case${data.count !== 1 ? 's' : ''} — investigate in sheet</span>
-    </div>
-    <table>
-      <thead><tr>
-        <th>Imported At</th><th>Facility</th><th>Brand</th>
-        <th>SKU / Item</th><th>Qty</th><th>Old Qty</th><th>Status</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>`;
-}
-
-// ──────────────────────────────────────────────────────────────
-// STATUS UI
-// ──────────────────────────────────────────────────────────────
-function setLoading(msg) {
-  const b = document.getElementById('status-banner');
-  b.textContent = '⏳  ' + msg;
-  b.className = 'status-banner loading';
-  b.style.display = 'block';
-  document.getElementById('btn-refresh').disabled = true;
-}
-
-function setError(msg) {
-  const b = document.getElementById('status-banner');
-  b.textContent = '⚠️  ' + msg;
-  b.className = 'status-banner error';
-  b.style.display = 'block';
-  document.getElementById('btn-refresh').disabled = false;
-}
-
-function clearStatus() {
-  document.getElementById('status-banner').style.display = 'none';
-  document.getElementById('btn-refresh').disabled = false;
-}
-
-function setRefresh() {
-  document.getElementById('last-refresh').textContent =
-    'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-// ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════
 // HELPERS
-// ──────────────────────────────────────────────────────────────
-function fmt(n)   { return Number(n || 0).toLocaleString('en-IN'); }
-function esc(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// ═══════════════════════════════════════
+function setStatus(state, msg) {
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot ' + (state==='live'?'dot-live':state==='error'?'dot-error':'dot-idle');
+  document.getElementById('status-text').textContent = msg;
+}
 
-// ──────────────────────────────────────────────────────────────
-// INIT
-// ──────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => { loadActive(); });
+function setRefreshLoading(on) {
+  document.getElementById('btn-refresh').classList.toggle('loading', on);
+}
+
+function showLoadingRow() {
+  document.getElementById('table-body').innerHTML =
+    `<tr class="loading-row"><td colspan="13"><div class="spinner"></div>Fetching from Google Sheets…</td></tr>`;
+}
+
+function showErrorRow(msg) {
+  document.getElementById('table-body').innerHTML =
+    `<tr class="loading-row"><td colspan="13" style="color:var(--red)">⚠ ${esc(msg)}</td></tr>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 </script>
 </body>
 </html>
