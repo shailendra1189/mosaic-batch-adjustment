@@ -429,19 +429,20 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 });
 
 // ═══════════════════════════════════════
-// JSONP FETCH — calls your existing API
+// JSONP FETCH — 35s timeout for Apps Script cold starts
 // ═══════════════════════════════════════
 function jsonp(params) {
   return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Date.now();
+    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const url = WEBAPP_URL + '?' + Object.entries(Object.assign({ callback: cbName }, params))
       .map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
     const script = document.createElement('script');
     const timer = setTimeout(() => {
-      cleanup(); reject(new Error('Request timed out'));
-    }, 15000);
+      cleanup();
+      reject(new Error('Timed out after 35s. Apps Script may be slow to start — try Refresh.'));
+    }, 35000);
     window[cbName] = (data) => { clearTimeout(timer); cleanup(); resolve(data); };
-    script.onerror = () => { clearTimeout(timer); cleanup(); reject(new Error('Network error')); };
+    script.onerror = () => { clearTimeout(timer); cleanup(); reject(new Error('Network error — check Apps Script deployment.')); };
     function cleanup() { delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); }
     script.src = url;
     document.head.appendChild(script);
@@ -449,15 +450,14 @@ function jsonp(params) {
 }
 
 // ═══════════════════════════════════════
-// LOAD DATA
+// LOAD DATA — single request, no double call
 // ═══════════════════════════════════════
 async function loadData(force) {
-  setStatus('idle', 'Fetching…');
+  setStatus('idle', 'Connecting…');
   setRefreshLoading(true);
-  showLoadingRow();
+  showLoadingRow('Connecting to Apps Script (may take 10–20s)…');
 
   try {
-    // Build params for _getRows — matches your existing API params
     const params = { action: 'rows', period: currentPeriod };
     const bu    = document.getElementById('f-bu').value;
     const brand = document.getElementById('f-brand').value;
@@ -466,56 +466,32 @@ async function loadData(force) {
     if (brand) params.brand = brand;
     if (inv)   params.inv   = inv;
 
+    showLoadingRow('Fetching data from Google Sheets…');
     const result = await jsonp(params);
-
     if (!result.ok) throw new Error(result.error || 'API returned ok:false');
 
-    // result.rows is array of arrays, result.headers is the header array
     const headers = result.headers || [];
     allRows = (result.rows || []).map(row => {
       const obj = {};
-      headers.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ''; });
+      headers.forEach((h, i) => { obj[h] = (row[i] !== undefined && row[i] !== null) ? row[i] : ''; });
       return obj;
     });
 
-    // Populate facility filter dynamically
+    // Summary computed from rows — no extra API call needed
+    updateSummaryFromRows();
     populateFacilityFilter();
-
     applyClientFilters();
-    loadSummary();
-    setStatus('live', 'Connected · ' + allRows.length + ' records loaded');
-    document.getElementById('last-refresh').textContent =
-      'Last refreshed: ' + new Date().toLocaleTimeString('en-IN');
+
+    const ts = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    setStatus('live', 'Connected · ' + allRows.length + ' records · ' + ts + ' IST');
+    document.getElementById('last-refresh').textContent = 'Last refreshed: ' + ts;
 
   } catch(err) {
     showErrorRow(err.message);
-    setStatus('error', 'Error: ' + err.message);
+    setStatus('error', err.message);
     console.error(err);
   } finally {
     setRefreshLoading(false);
-  }
-}
-
-// Load summary cards from _getSummary action
-async function loadSummary() {
-  try {
-    const params = { action: 'summary', period: currentPeriod };
-    const bu    = document.getElementById('f-bu').value;
-    const brand = document.getElementById('f-brand').value;
-    if (bu)    params.bu    = bu;
-    if (brand) params.brand = brand;
-    const result = await jsonp(params);
-    if (result.ok && result.summary) {
-      const s = result.summary;
-      setCard('stat-total',  s.total   || allRows.length, 'Total rows');
-      setCard('stat-good',   s.good    || countByInv('Good'), countPct(s.good || countByInv('Good'), s.total || allRows.length) + '% of total');
-      setCard('stat-bad',    s.bad     || countByInv('Bad'),  countPct(s.bad  || countByInv('Bad'),  s.total || allRows.length) + '% of total');
-      setCard('stat-qty',    fmtQty(s.netQty || sumQty()), s.netQty >= 0 ? 'Net positive' : 'Net negative');
-    } else {
-      updateSummaryFromRows();
-    }
-  } catch(e) {
-    updateSummaryFromRows();
   }
 }
 
@@ -709,9 +685,10 @@ function setRefreshLoading(on) {
   document.getElementById('btn-refresh').classList.toggle('loading', on);
 }
 
-function showLoadingRow() {
+function showLoadingRow(msg) {
+  const text = msg || 'Fetching from Google Sheets…';
   document.getElementById('table-body').innerHTML =
-    `<tr class="loading-row"><td colspan="13"><div class="spinner"></div>Fetching from Google Sheets…</td></tr>`;
+    `<tr class="loading-row"><td colspan="13"><div class="spinner"></div>${text}</td></tr>`;
 }
 
 function showErrorRow(msg) {
