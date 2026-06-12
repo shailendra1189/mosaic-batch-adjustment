@@ -238,6 +238,9 @@ td.mono{font-family:'Courier New',monospace;font-size:11.5px;color:var(--gray-90
 
   <!-- Main -->
   <main class="main">
+  <!-- DEBUG PANEL - remove after fixing -->
+  <div id="debug-panel" style="background:#1e1e1e;color:#0f0;font-family:monospace;font-size:11px;padding:12px;border-radius:8px;margin-bottom:1rem;white-space:pre-wrap;max-height:300px;overflow-y:auto;display:none"></div>
+
 
     <!-- Row header -->
     <div class="row-header">
@@ -433,6 +436,11 @@ async function loadData() {
 
     showSpinner('Fetching data from Google Sheets…');
     const result = await jsonp(params);
+    dbg('API ok: ' + result.ok);
+    dbg('API error: ' + (result.error||'none'));
+    dbg('headers: ' + JSON.stringify(result.headers));
+    dbg('row count: ' + (result.rows||[]).length);
+    if (result.rows && result.rows[0]) dbg('first row: ' + JSON.stringify(result.rows[0]));
     if (!result.ok) throw new Error(result.error || 'API error');
 
     const headers = result.headers || [];
@@ -441,6 +449,10 @@ async function loadData() {
       headers.forEach((h,i) => { obj[h] = (row[i] != null) ? row[i] : ''; });
       return obj;
     });
+    dbg('allRows[0]: ' + JSON.stringify(allRows[0]));
+    dbg('Qty sample: ' + allRows.slice(0,5).map(r=>r['Qty']).join(', '));
+    dbg('Inv Type sample: ' + allRows.slice(0,5).map(r=>r['Inv Type']).join(', '));
+    dbg('Brand sample: ' + allRows.slice(0,5).map(r=>r['Brand']).join(', '));
 
     populateFacilityFilter();
     populateAdjTypeFilter();
@@ -772,6 +784,14 @@ function showError(msg) {
 }
 function setText(id, val) { document.getElementById(id).textContent = val; }
 function fmt(n) { return Math.abs(Math.round(n)).toLocaleString('en-IN'); }
+function dbg(msg) {
+  const p = document.getElementById('debug-panel');
+  if (!p) return;
+  p.style.display = 'block';
+  p.textContent += '> ' + msg + '\n';
+  p.scrollTop = p.scrollHeight;
+  console.log('[DBG] ' + msg);
+}
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtDate(s) {
   if (!s) return '';
