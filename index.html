@@ -160,6 +160,10 @@ td.mono{font-family:'Courier New',monospace;font-size:11.5px;color:var(--gray-90
 .spinner{width:16px;height:16px;border:2px solid var(--gray-200);border-top-color:var(--green);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-right:7px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
+/* ── BREAKDOWN TAB ── */
+.breakdown-tab{font-family:inherit;font-size:11px;font-weight:500;padding:3px 10px;border-radius:4px;border:1px solid var(--gray-200);background:var(--white);color:var(--gray-500);cursor:pointer;transition:all 0.15s;}
+.breakdown-tab.active{background:var(--green);border-color:var(--green);color:white;}
+
 /* ── SECTION HIDDEN ── */
 .section-hidden{display:none;}
 </style>
@@ -244,7 +248,15 @@ td.mono{font-family:'Courier New',monospace;font-size:11.5px;color:var(--gray-90
     <div class="row-header">
       <div class="period-label" id="period-label"><strong>Yesterday</strong> · <span id="period-date">—</span></div>
       <div class="filters">
-        <select class="fsel" id="f-bu"><option value="">All business units</option><option value="B2B">B2B</option><option value="B2C">B2C</option></select>
+        <select class="fsel" id="f-bu">
+  <option value="">All business units</option>
+  <option value="3PL B2B">3PL B2B</option>
+  <option value="3PL B2C">3PL B2C</option>
+  <option value="Dark Store">Dark Store</option>
+  <option value="Dark Store MH">Dark Store MH</option>
+  <option value="Self Warehouse">Self Warehouse</option>
+  <option value="Exhibition">Exhibition</option>
+</select>
         <select class="fsel" id="f-brand"><option value="">All brands</option><option value="Man Matters">Man Matters</option><option value="Be Bodywise">Be Bodywise</option><option value="Little Joys">Little Joys</option></select>
         <select class="fsel" id="f-inv"><option value="">Good + Bad</option><option value="good">Good only</option><option value="bad">Bad only</option></select>
         <select class="fsel" id="f-facility"><option value="">All Facilities</option></select>
@@ -273,11 +285,14 @@ td.mono{font-family:'Courier New',monospace;font-size:11.5px;color:var(--gray-90
       <!-- Brand Breakdown -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Brand Breakdown</div>
-          <span class="card-count" id="brand-count">0 brands</span>
+          <div class="card-title">Breakdown</div>
+          <div style="display:flex;gap:4px">
+            <button class="breakdown-tab active" id="bt-brand" onclick="switchBreakdown('brand')">Brand</button>
+            <button class="breakdown-tab" id="bt-bu" onclick="switchBreakdown('bu')">Business Unit</button>
+          </div>
         </div>
         <table>
-          <thead><tr><th>Brand</th><th style="text-align:right">Add</th><th style="text-align:right">Remove</th><th style="text-align:right">Net</th></tr></thead>
+          <thead><tr><th id="breakdown-col-label">Brand</th><th style="text-align:right">Add</th><th style="text-align:right">Remove</th><th style="text-align:right">Net</th></tr></thead>
           <tbody id="brand-tbody"><tr><td class="empty-cell" colspan="4"><div class="spinner"></div>Loading…</td></tr></tbody>
         </table>
       </div>
@@ -343,6 +358,279 @@ td.mono{font-family:'Courier New',monospace;font-size:11.5px;color:var(--gray-90
 const WEBAPP_URL     = 'https://script.google.com/macros/s/AKfycbz3PaJXilY7RGuG7rC1edbCu-Kl-xWfy5fHlYXktDRbXtHlzo8wUptW7gU7J_xqmZpJYw/exec';
 const ALLOWED_DOMAIN = 'mosaicwellness.in';
 const ROWS_PER_PAGE  = 30;
+
+// ═══════════════════════════
+// FACILITY → BUSINESS UNIT MAP (from MDM)
+// ═══════════════════════════
+const FACILITY_BU_MAP = {
+  'Aramex': '3PL B2C',
+  'B2B Ahmedabad Offline': '3PL B2B',
+  'B2B BLR Working': '3PL B2B',
+  'B2B Beyond NCR ECOM': '3PL B2B',
+  'B2B Beyond NCR Offline': '3PL B2B',
+  'B2B Bhumi': 'Self Warehouse',
+  'B2B Global': 'Self Warehouse',
+  'B2B Kolkata Offline': '3PL B2B',
+  'BB_ER Brookfield': 'Dark Store',
+  'BB_ER Sarjapur': 'Dark Store',
+  'BB_ER Yelahanka': 'Dark Store',
+  'BB_ER_Andheri': 'Dark Store',
+  'BB_ER_Banashankari': 'Dark Store',
+  'BB_ER_Brookfield': 'Dark Store',
+  'BB_ER_Byculla': 'Dark Store',
+  'BB_ER_Charkop': 'Dark Store',
+  'BB_ER_Chinchwad': 'Dark Store',
+  'BB_ER_Dhanori': 'Dark Store',
+  'BB_ER_Kalyan': 'Dark Store',
+  'BB_ER_KarwanSahu': 'Dark Store',
+  'BB_ER_Kondapur': 'Dark Store',
+  'BB_ER_Kothrud': 'Dark Store',
+  'BB_ER_Mundhwa': 'Dark Store',
+  'BB_ER_Rahatani': 'Dark Store',
+  'BB_ER_Sanpada': 'Dark Store',
+  'BB_ER_Sarjapur': 'Dark Store',
+  'BB_ER_SuchitraJunction': 'Dark Store',
+  'BB_ER_Thane': 'Dark Store',
+  'BB_ER_Vasai': 'Dark Store',
+  'BB_ER_Vikhroli': 'Dark Store',
+  'BB_ER_Yelahanka': 'Dark Store',
+  'BB_ER_Yeswanthpur': 'Dark Store',
+  'BB_Kuik_Abids': 'Dark Store',
+  'BB_Kuik_Chrompet': 'Dark Store',
+  'BB_Kuik_DefenceColony': 'Dark Store',
+  'BB_Kuik_KalyanNagar': 'Dark Store',
+  'BB_Kuik_Madipakkam': 'Dark Store',
+  'BB_Kuik_Memnagar': 'Dark Store',
+  'BB_Kuik_Miyapur': 'Dark Store',
+  'BB_Kuik_Nagpur': 'Dark Store',
+  'BB_Kuik_Purasaivakkam': 'Dark Store',
+  'BB_Kuik_RRNagar': 'Dark Store',
+  'BB_Kuik_Vadodara': 'Dark Store',
+  'BB_PnD_EastDelhi': 'Dark Store',
+  'BB_PnD_Faridabad': 'Dark Store',
+  'BB_PnD_Ghaziabad': 'Dark Store',
+  'BB_PnD_Gurugram': 'Dark Store',
+  'BB_PnD_Gurugram2': 'Dark Store',
+  'BB_PnD_Humayunpur': 'Dark Store',
+  'BB_PnD_Jaipur': 'Dark Store',
+  'BB_PnD_Lucknow': 'Dark Store',
+  'BB_PnD_Nangloi': 'Dark Store',
+  'BB_PnD_Noida': 'Dark Store',
+  'BB_PnD_Okhla': 'Dark Store',
+  'BB_PnD_PatelNagar': 'Dark Store',
+  'BB_PnD_TransportNagar': 'Dark Store',
+  'BB_PnD_Uttamnagar': 'Dark Store',
+  'BLR B2B': '3PL B2B',
+  'BLR B2B Offline': '3PL B2B',
+  'BW Ahmedabad': '3PL B2C',
+  'BW Beyond LUC': '3PL B2C',
+  'BW Beyond NCR': '3PL B2C',
+  'BW EMIZA BLR': '3PL B2C',
+  'BW EMIZA NCR': '3PL B2C',
+  'BW Emiza Guwahati': '3PL B2C',
+  'BW GLOBAL': 'Self Warehouse',
+  'BW HYD New': '3PL B2C',
+  'BW Kolkata': '3PL B2C',
+  'BW Lucknow': '3PL B2C',
+  'BW_Kuik_Begur': 'Dark Store',
+  'DS Ahmedabad': 'Dark Store MH',
+  'DS Bangalore': 'Dark Store MH',
+  'DS Beyond NCR': '3PL B2C',
+  'DS_Hyd': 'Dark Store MH',
+  'DS_Kol': 'Dark Store MH',
+  'DTDC_Ernakulum': 'Dark Store',
+  'Delhivery_Vadaplani': 'Dark Store',
+  'Exhibition': 'Exhibition',
+  'Exhibition_NCR': 'Dark Store',
+  'Inamo_Chembur': 'Dark Store',
+  'Inamo_Sion': 'Dark Store',
+  'Kuik_Abids': 'Dark Store',
+  'Kuik_Begur': 'Dark Store',
+  'Kuik_Chrompet': 'Dark Store',
+  'Kuik_DefenceColony': 'Dark Store',
+  'Kuik_KalyanNagar': 'Dark Store',
+  'Kuik_Madipakkam': 'Dark Store',
+  'Kuik_Memnagar': 'Dark Store',
+  'Kuik_Miyapur': 'Dark Store',
+  'Kuik_Purasaivakkam': 'Dark Store',
+  'Kuik_RRNagar': 'Dark Store',
+  'Kuik_Vadodara': 'Dark Store',
+  'LJ Ahmedabad': '3PL B2C',
+  'LJ Beyond LUC': '3PL B2C',
+  'LJ Beyond NCR': '3PL B2C',
+  'LJ EMIZA BLR': '3PL B2C',
+  'LJ Emiza Guwahati': '3PL B2C',
+  'LJ GLOBAL': 'Self Warehouse',
+  'LJ HYD NEW': '3PL B2C',
+  'LJ Kolkata': '3PL B2C',
+  'LJ Lucknow': '3PL B2C',
+  'LJ_Blitz_Tirumalagiri': 'Dark Store',
+  'LJ_ER Brookfield': 'Dark Store',
+  'LJ_ER Sarjapur': 'Dark Store',
+  'LJ_ER Yelahanka': 'Dark Store',
+  'LJ_ER_AirportGateNo1': 'Dark Store',
+  'LJ_ER_Andheri': 'Dark Store',
+  'LJ_ER_Banashankari': 'Dark Store',
+  'LJ_ER_Behala': 'Dark Store',
+  'LJ_ER_Beleghata': 'Dark Store',
+  'LJ_ER_Brookfield': 'Dark Store',
+  'LJ_ER_Byculla': 'Dark Store',
+  'LJ_ER_Charkop': 'Dark Store',
+  'LJ_ER_Chinchwad': 'Dark Store',
+  'LJ_ER_Dhanori': 'Dark Store',
+  'LJ_ER_Kalyan': 'Dark Store',
+  'LJ_ER_KarwanSahu': 'Dark Store',
+  'LJ_ER_Kondapur': 'Dark Store',
+  'LJ_ER_Kothrud': 'Dark Store',
+  'LJ_ER_Mundhwa': 'Dark Store',
+  'LJ_ER_Rahatani': 'Dark Store',
+  'LJ_ER_Ruby': 'Dark Store',
+  'LJ_ER_Sanpada': 'Dark Store',
+  'LJ_ER_Sarjapur': 'Dark Store',
+  'LJ_ER_SuchitraJunction': 'Dark Store',
+  'LJ_ER_Thane': 'Dark Store',
+  'LJ_ER_Vasai': 'Dark Store',
+  'LJ_ER_Vikhroli': 'Dark Store',
+  'LJ_ER_Yelahanka': 'Dark Store',
+  'LJ_ER_Yeswanthpur': 'Dark Store',
+  'LJ_Kuik_Abids': 'Dark Store',
+  'LJ_Kuik_Begur': 'Dark Store',
+  'LJ_Kuik_Chrompet': 'Dark Store',
+  'LJ_Kuik_DefenceColony': 'Dark Store',
+  'LJ_Kuik_KalyanNagar': 'Dark Store',
+  'LJ_Kuik_Madipakkam': 'Dark Store',
+  'LJ_Kuik_Memnagar': 'Dark Store',
+  'LJ_Kuik_Miyapur': 'Dark Store',
+  'LJ_Kuik_Nagpur': 'Dark Store',
+  'LJ_Kuik_Purasaivakkam': 'Dark Store',
+  'LJ_Kuik_RRNagar': 'Dark Store',
+  'LJ_Kuik_Vadodara': 'Dark Store',
+  'LJ_PnD_EastDelhi': 'Dark Store',
+  'LJ_PnD_Faridabad': 'Dark Store',
+  'LJ_PnD_Ghaziabad': 'Dark Store',
+  'LJ_PnD_Gurugram': 'Dark Store',
+  'LJ_PnD_Humayunpur': 'Dark Store',
+  'LJ_PnD_Jaipur': 'Dark Store',
+  'LJ_PnD_Lucknow': 'Dark Store',
+  'LJ_PnD_Nangloi': 'Dark Store',
+  'LJ_PnD_Noida': 'Dark Store',
+  'LJ_PnD_Okhla': 'Dark Store',
+  'LJ_PnD_PatelNagar': 'Dark Store',
+  'LJ_PnD_TransportNagar': 'Dark Store',
+  'LJ_PnD_Uttamnagar': 'Dark Store',
+  'Lakeshore Thane Kiosk': 'Dark Store',
+  'MH_ER_Mumbai': 'Dark Store',
+  'MH_PND_DELHI': 'Dark Store',
+  'MM Ahmedabad': '3PL B2C',
+  'MM Beyond LUC': '3PL B2C',
+  'MM Beyond NCR': '3PL B2C',
+  'MM EMIZA BLR': '3PL B2C',
+  'MM EMIZA NCR': '3PL B2C',
+  'MM Emiza Guwahati': '3PL B2C',
+  'MM GLOBAL': 'Self Warehouse',
+  'MM HYD New': '3PL B2C',
+  'MM Kolkata': '3PL B2C',
+  'MM Lucknow': '3PL B2C',
+  'MM_ER Sarjapur': 'Dark Store',
+  'MM_ER Yelahanka': 'Dark Store',
+  'MM_ER_AirportGateNo1': 'Dark Store',
+  'MM_ER_Andheri': 'Dark Store',
+  'MM_ER_Banashankari': 'Dark Store',
+  'MM_ER_Beleghata': 'Dark Store',
+  'MM_ER_Byculla': 'Dark Store',
+  'MM_ER_Charkop': 'Dark Store',
+  'MM_ER_Chinchwad': 'Dark Store',
+  'MM_ER_Dhanori': 'Dark Store',
+  'MM_ER_Kalyan': 'Dark Store',
+  'MM_ER_KarwanSahu': 'Dark Store',
+  'MM_ER_Kondapur': 'Dark Store',
+  'MM_ER_Kothrud': 'Dark Store',
+  'MM_ER_Mundhwa': 'Dark Store',
+  'MM_ER_Rahatani': 'Dark Store',
+  'MM_ER_Sanpada': 'Dark Store',
+  'MM_ER_Sarjapur': 'Dark Store',
+  'MM_ER_SuchitraJunction': 'Dark Store',
+  'MM_ER_Thane': 'Dark Store',
+  'MM_ER_Vasai': 'Dark Store',
+  'MM_ER_Vikhroli': 'Dark Store',
+  'MM_ER_Yeswanthpur': 'Dark Store',
+  'MM_Kuik_Abids': 'Dark Store',
+  'MM_Kuik_Begur': 'Dark Store',
+  'MM_Kuik_Chrompet': 'Dark Store',
+  'MM_Kuik_DefenceColony': 'Dark Store',
+  'MM_Kuik_KalyanNagar': 'Dark Store',
+  'MM_Kuik_Madipakkam': 'Dark Store',
+  'MM_Kuik_Memnagar': 'Dark Store',
+  'MM_Kuik_Miyapur': 'Dark Store',
+  'MM_Kuik_Nagpur': 'Dark Store',
+  'MM_Kuik_Purasaivakkam': 'Dark Store',
+  'MM_Kuik_RRNagar': 'Dark Store',
+  'MM_Kuik_Vadodara': 'Dark Store',
+  'MM_PnD_EastDelhi': 'Dark Store',
+  'MM_PnD_Faridabad': 'Dark Store',
+  'MM_PnD_Ghaziabad': 'Dark Store',
+  'MM_PnD_Gurugram': 'Dark Store',
+  'MM_PnD_Humayunpur': 'Dark Store',
+  'MM_PnD_Jaipur': 'Dark Store',
+  'MM_PnD_Lucknow': 'Dark Store',
+  'MM_PnD_Nangloi': 'Dark Store',
+  'MM_PnD_Noida': 'Dark Store',
+  'MM_PnD_Okhla': 'Dark Store',
+  'MM_PnD_PatelNagar': 'Dark Store',
+  'MM_PnD_TransportNagar': 'Dark Store',
+  'MM_PnD_Uttamnagar': 'Dark Store',
+  'MP Ahmedabad': '3PL B2C',
+  'MP BLR': '3PL B2C',
+  'MP Beyond NCR': '3PL B2C',
+  'MP HYD': '3PL B2C',
+  'MP Kolkata': '3PL B2C',
+  'MP Lucknow': '3PL B2C',
+  'MP NCR': '3PL B2C',
+  'Mosaic Wellness Pvt Ltd': 'Exhibition',
+  'NCR B2B': '3PL B2B',
+  'OWN': '3PL B2C',
+  'OWN B2B': '3PL B2B',
+  'OWN Beyond BLR': '3PL B2C',
+  'OWN Beyond BWD': '3PL B2C',
+  'OWN Beyond NCR': '3PL B2C',
+  'OWN Exhibition': 'Exhibition',
+  'Parasnath': 'Self Warehouse',
+  'PnD_East_Delhi': 'Dark Store',
+  'PnD_Faridabad': 'Dark Store',
+  'PnD_Ghaziabad': 'Dark Store',
+  'PnD_Gurugram': 'Dark Store',
+  'PnD_Humayunpur': 'Dark Store',
+  'PnD_Jaipur': 'Dark Store',
+  'PnD_Lucknow': 'Dark Store',
+  'PnD_Nangloi': 'Dark Store',
+  'PnD_Noida': 'Dark Store',
+  'PnD_Okhla': 'Dark Store',
+  'PnD_PatelNagar': 'Dark Store',
+  'PnD_TransportNagar': 'Dark Store',
+  'PnD_Uttam_Nagar': 'Dark Store',
+  'RCity Kiosk': 'Dark Store',
+  'RM PARASNATH': 'Self Warehouse',
+  'RTV GLOBAL': 'Self Warehouse',
+  'SL Ambient': 'Self Warehouse',
+  'SL B2B ECOM': 'Self Warehouse',
+  'SL B2B Offline': '3PL B2B',
+  'SL BW': 'Self Warehouse',
+  'SL Damage': 'Self Warehouse',
+  'SL LJ': 'Self Warehouse',
+  'SL MM': 'Self Warehouse',
+  'SL Mother Hub': 'Self Warehouse',
+  'SL PM': 'Self Warehouse',
+  'SL RX': 'Self Warehouse',
+  'SL Returns': 'Self Warehouse',
+  'Servicelink': 'Self Warehouse',
+  'Zippee_Mum_BB': 'Dark Store',
+  'Zippee_Mum_LJ': 'Dark Store',
+  'Zippee_Mum_MM': 'Dark Store'
+};
+
+function getFacilityBU(facility) {
+  return FACILITY_BU_MAP[facility] || FACILITY_BU_MAP[facility?.trim()] || 'Unknown';
+}
 const SHEET_URL      = 'https://docs.google.com/spreadsheets/d/1nuOevWS2m06dbOS9BWavnVyRM2W4_09QDBgomPpqTDY';
 
 // ═══════════════════════════
@@ -473,7 +761,7 @@ function applyFilters() {
 
   filteredRows = allRows.filter(r => {
     const buVal = document.getElementById('f-bu').value;
-    if (buVal && (r['BU']||r['BU']||'') !== buVal) return false;
+    if (buVal && getFacilityBU(r['Facility']) !== buVal) return false;
     if (facility && r['Facility'] !== facility) return false;
     const brandVal = document.getElementById('f-brand').value;
     if (brandVal && (r['Brand']||'') !== brandVal) return false;
@@ -520,6 +808,8 @@ function updateSummary() {
     const inv   = (r['Inv Type']||'').toLowerCase();
     const type  = (r['Type']||'').toUpperCase();
     const qty   = Math.abs(parseFloat(r['Qty']) || 0);
+    // Enrich mapped BU if not done yet
+    if (!r._mappedBU) r._mappedBU = getFacilityBU(r['Facility']);
     const isAdd = type === 'ADD'    || type === 'RECEIPT'  || type === 'ADDITION';
     const isRem = type === 'REMOVE' || type === 'DISPATCH' || type === 'REMOVAL';
     if (isAdd) totalAdd += qty;
@@ -548,34 +838,67 @@ function updateSummary() {
 }
 
 // ═══════════════════════════
-// BRAND TABLE
+// BREAKDOWN TABLE (Brand / BU toggle)
 // ═══════════════════════════
+let currentBreakdown = 'brand';
+
+function switchBreakdown(mode) {
+  currentBreakdown = mode;
+  document.getElementById('bt-brand').classList.toggle('active', mode === 'brand');
+  document.getElementById('bt-bu').classList.toggle('active', mode === 'bu');
+  document.getElementById('breakdown-col-label').textContent = mode === 'brand' ? 'Brand' : 'Business Unit';
+  updateBrandTable();
+}
+
+function getBUBadge(bu) {
+  if (!bu) return '';
+  const b = bu.toLowerCase();
+  if (b.includes('b2b'))        return 'badge-b2b';
+  if (b.includes('dark store')) return 'badge-warn';
+  if (b.includes('b2c'))        return 'badge-b2c';
+  if (b.includes('self'))       return 'badge-good';
+  return '';
+}
+
 function updateBrandTable() {
   const map = {};
   allRows.forEach(r => {
-    const brand = (r['Brand'] && r['Brand'] !== 'Unknown' && r['Brand'] !== 'Other' && r['Brand'].trim() !== '') ? r['Brand'] : detectBrand(r['SKU']||r['Item Name']||'');
-    if (!map[brand]) map[brand] = {add:0, rem:0};
+    // Get grouping key based on current mode
+    let key;
+    if (currentBreakdown === 'bu') {
+      key = r._mappedBU || getFacilityBU(r['Facility']) || 'Unknown';
+    } else {
+      key = (r['Brand'] && r['Brand'] !== 'Unknown' && r['Brand'] !== 'Other' && r['Brand'].trim() !== '')
+        ? r['Brand'] : detectBrand(r['SKU']||r['Item Name']||'');
+    }
+    if (!map[key]) map[key] = {add:0, rem:0};
     const qty  = Math.abs(parseFloat(r['Qty']) || 0);
     const type = (r['Type']||'').toUpperCase();
-    if (type === 'ADD' || type === 'RECEIPT' || type === 'ADDITION') map[brand].add += qty;
-    else map[brand].rem += qty;
+    if (type === 'ADD' || type === 'RECEIPT' || type === 'ADDITION') map[key].add += qty;
+    else map[key].rem += qty;
   });
 
-  const brands = Object.keys(map).sort();
-  document.getElementById('brand-count').textContent = brands.length + ' brand' + (brands.length!==1?'s':'');
+  const keys = Object.keys(map).sort();
+  const label = currentBreakdown === 'bu' ? 'BU' : 'brand';
+  document.getElementById('brand-count').textContent = keys.length + ' ' + label + (keys.length!==1?'s':'');
 
-  if (!brands.length) {
+  if (!keys.length) {
     document.getElementById('brand-tbody').innerHTML = '<tr><td class="empty-cell" colspan="4">No data</td></tr>';
     return;
   }
 
-  document.getElementById('brand-tbody').innerHTML = brands.map(b => {
-    const d = map[b];
+  document.getElementById('brand-tbody').innerHTML = keys.map(k => {
+    const d = map[k];
     const net = d.add - d.rem;
     const cls = net > 0 ? 'qty-pos' : net < 0 ? 'qty-neg' : 'qty-zero';
-    const bc = b.includes('Man')?'badge-mm':b.includes('Body')||b.includes('Bodywise')?'badge-bb':b.includes('Joy')?'badge-lj':b==='Other'?'':'badge-warn';
+    let badgeCls;
+    if (currentBreakdown === 'bu') {
+      badgeCls = getBUBadge(k);
+    } else {
+      badgeCls = k.includes('Man')?'badge-mm':k.includes('Body')||k.includes('Bodywise')?'badge-bb':k.includes('Joy')?'badge-lj':k==='Other'?'':'badge-warn';
+    }
     return `<tr>
-      <td><span class="badge ${bc}">${esc(b)}</span></td>
+      <td><span class="badge ${badgeCls}">${esc(k)}</span></td>
       <td class="num qty-pos">+${fmt(d.add)}</td>
       <td class="num qty-neg">-${fmt(d.rem)}</td>
       <td class="num ${cls}">${net>=0?'+':''}${fmt(net)}</td>
