@@ -528,17 +528,18 @@ function updateSummary() {
   let totalAdd=0, totalRem=0, goodAdd=0, goodRem=0, badAdd=0, badRem=0, proh=0;
 
   rows.forEach(r => {
-    const qty = parseFloat(r['Qty']) || 0;
-    const inv = (r['Inv Type']||'').toLowerCase();
-    const isAdd = qty > 0;
-    const isRem = qty < 0;
+    const inv   = (r['Inv Type']||'').toLowerCase();
+    const type  = (r['Type']||'').toUpperCase();
+    const qty   = Math.abs(parseFloat(r['Qty']) || 0);
+    const isAdd = type === 'ADD'    || type === 'RECEIPT'  || type === 'ADDITION';
+    const isRem = type === 'REMOVE' || type === 'DISPATCH' || type === 'REMOVAL';
     if (isAdd) totalAdd += qty;
-    if (isRem) totalRem += Math.abs(qty);
+    if (isRem) totalRem += qty;
     if (inv.includes('good') && isAdd) goodAdd += qty;
-    if (inv.includes('good') && isRem) goodRem += Math.abs(qty);
+    if (inv.includes('good') && isRem) goodRem += qty;
     if (inv.includes('bad')  && isAdd) badAdd  += qty;
-    if (inv.includes('bad')  && isRem) badRem  += Math.abs(qty);
-    // Prohibited: bad remove
+    if (inv.includes('bad')  && isRem) badRem  += qty;
+    // Prohibited: bad inventory being removed
     if (inv.includes('bad') && isRem) proh++;
   });
 
@@ -565,9 +566,10 @@ function updateBrandTable() {
   allRows.forEach(r => {
     const brand = (r['Brand'] && r['Brand'] !== 'Unknown' && r['Brand'] !== 'Other' && r['Brand'].trim() !== '') ? r['Brand'] : detectBrand(r['SKU']||r['Item Name']||'');
     if (!map[brand]) map[brand] = {add:0, rem:0};
-    const qty = parseFloat(r['Qty']) || 0;
-    if (qty > 0) map[brand].add += qty;
-    else         map[brand].rem += Math.abs(qty);
+    const qty  = Math.abs(parseFloat(r['Qty']) || 0);
+    const type = (r['Type']||'').toUpperCase();
+    if (type === 'ADD' || type === 'RECEIPT' || type === 'ADDITION') map[brand].add += qty;
+    else map[brand].rem += qty;
   });
 
   const brands = Object.keys(map).sort();
@@ -610,9 +612,9 @@ function detectBrand(str) {
 // ═══════════════════════════
 function updateProhibited() {
   const prohibRows = allRows.filter(r => {
-    const inv = (r['Inv Type']||'').toLowerCase();
-    const qty = parseFloat(r['Qty'])||0;
-    return inv.includes('bad') && qty < 0;
+    const inv  = (r['Inv Type']||'').toLowerCase();
+    const type = (r['Type']||'').toUpperCase();
+    return inv.includes('bad') && type === 'REMOVE';
   });
 
   const count = prohibRows.length;
@@ -654,7 +656,9 @@ function renderTable() {
   const page  = filteredRows.slice(start, start+ROWS_PER_PAGE);
 
   tbody.innerHTML = page.map(r => {
-    const qty = parseFloat(r['Qty'])||0;
+    const qtyRaw = Math.abs(parseFloat(r['Qty'])||0);
+    const qtyType = (r['Type']||'').toUpperCase();
+    const qty = (qtyType === 'REMOVE' || qtyType === 'DISPATCH' || qtyType === 'REMOVAL') ? -qtyRaw : qtyRaw;
     const inv = (r['Inv Type']||'').toLowerCase();
     const qcls = qty>0?'qty-pos':qty<0?'qty-neg':'qty-zero';
     return `<tr>
@@ -665,7 +669,7 @@ function renderTable() {
       <td class="mono" style="font-size:11px">${esc(r['Batch']||'—')}</td>
       <td style="font-size:12px">${esc(r['Type']||'—')}</td>
       <td><span class="badge ${inv.includes('good')?'badge-good':'badge-bad'}">${inv.includes('good')?'Good ✓':'Bad ⚠'}</span></td>
-      <td class="num ${qcls}">${qty>=0?'+':''}${fmt(qty)}</td>
+      <td class="num ${qcls}">${qty>=0?'+':''}${fmt(Math.abs(qty))}</td>
       <td class="num" style="color:var(--gray-400)">${esc(String(r['Old Qty']||'—'))}</td>
       <td style="font-size:12px">${esc(r['Username']||'—')}</td>
       <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--gray-400)" title="${esc(r['Remarks']||'')}">${esc(r['Remarks']||'')}</td>
