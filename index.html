@@ -286,9 +286,12 @@ td.mono{font-family:'Courier New',monospace;font-size:11.5px;color:var(--gray-90
       <div class="card">
         <div class="card-header">
           <div class="card-title">Breakdown</div>
-          <div style="display:flex;gap:4px">
-            <button class="breakdown-tab active" id="bt-brand" onclick="switchBreakdown('brand')">Brand</button>
-            <button class="breakdown-tab" id="bt-bu" onclick="switchBreakdown('bu')">Business Unit</button>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="card-count" id="brand-count">—</span>
+            <div style="display:flex;gap:4px">
+              <button class="breakdown-tab active" id="bt-brand" onclick="switchBreakdown('brand')">Brand</button>
+              <button class="breakdown-tab" id="bt-bu" onclick="switchBreakdown('bu')">Business Unit</button>
+            </div>
           </div>
         </div>
         <table>
