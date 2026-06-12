@@ -310,14 +310,14 @@ td.mono{font-family:'Courier New',monospace;font-size:11.5px;color:var(--gray-90
             <tr>
               <th data-col="Date">Date</th>
               <th data-col="Facility">Facility</th>
-              <th data-col="SKU Code">SKU</th>
+              <th data-col="SKU">SKU</th>
               <th data-col="Item Name">Item Name</th>
               <th data-col="Batch">Batch</th>
-              <th data-col="Adjustment Type">Adj Type</th>
-              <th data-col="inventory type">Inv Type</th>
-              <th data-col="Quantity" style="text-align:right">Qty</th>
-              <th data-col="old_quantity" style="text-align:right">Old Qty</th>
-              <th data-col="username">User</th>
+              <th data-col="Type">Adj Type</th>
+              <th data-col="Inv Type">Inv Type</th>
+              <th data-col="Qty" style="text-align:right">Qty</th>
+              <th data-col="Old Qty" style="text-align:right">Old Qty</th>
+              <th data-col="Username">User</th>
               <th data-col="Remarks">Remarks</th>
             </tr>
           </thead>
@@ -472,18 +472,18 @@ function applyFilters() {
 
   filteredRows = allRows.filter(r => {
     const buVal = document.getElementById('f-bu').value;
-    if (buVal && (r['Business Unit']||r['BU']||'') !== buVal) return false;
+    if (buVal && (r['BU']||r['BU']||'') !== buVal) return false;
     if (facility && r['Facility'] !== facility) return false;
     const brandVal = document.getElementById('f-brand').value;
     if (brandVal && (r['Brand']||'') !== brandVal) return false;
-    if (adjType  && r['Adjustment Type'] !== adjType) return false;
+    if (adjType  && r['Type'] !== adjType) return false;
     if (inv) {
-      const it = (r['Inventory Type']||'').toLowerCase();
+      const it = (r['Inv Type']||'').toLowerCase();
       if (inv === 'good' && !it.includes('good')) return false;
       if (inv === 'bad'  && !it.includes('bad'))  return false;
     }
     if (search) {
-      const hay = [r['SKU Code'],r['Item Name'],r['Batch'],r['Username'],r['Remarks'],r['Facility'],r['Brand'],r['Business Unit']]
+      const hay = [r['SKU'],r['Item Name'],r['Batch'],r['Username'],r['Remarks'],r['Facility'],r['Brand'],r['BU']]
         .map(v=>String(v||'')).join(' ').toLowerCase();
       if (!hay.includes(search)) return false;
     }
@@ -504,7 +504,7 @@ function populateFacilityFilter() {
 function populateAdjTypeFilter() {
   const sel = document.getElementById('f-adj-type');
   const cur = sel.value;
-  const vals = [...new Set(allRows.map(r=>r['Adjustment Type']).filter(Boolean))].sort();
+  const vals = [...new Set(allRows.map(r=>r['Type']).filter(Boolean))].sort();
   sel.innerHTML = '<option value="">All Adj Types</option>' + vals.map(v=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(v)}</option>`).join('');
 }
 
@@ -516,8 +516,8 @@ function updateSummary() {
   let totalAdd=0, totalRem=0, goodAdd=0, goodRem=0, badAdd=0, badRem=0, proh=0;
 
   rows.forEach(r => {
-    const qty = parseFloat(r['Quantity']) || 0;
-    const inv = (r['Inventory Type']||'').toLowerCase();
+    const qty = parseFloat(r['Qty']) || 0;
+    const inv = (r['Inv Type']||'').toLowerCase();
     const isAdd = qty > 0;
     const isRem = qty < 0;
     if (isAdd) totalAdd += qty;
@@ -551,9 +551,9 @@ function updateSummary() {
 function updateBrandTable() {
   const map = {};
   allRows.forEach(r => {
-    const brand = (r['Brand'] && r['Brand'] !== 'Unknown' && r['Brand'].trim() !== '') ? r['Brand'] : detectBrand(r['Item Name']||r['SKU Code']||'');
+    const brand = (r['Brand'] && r['Brand'] !== 'Unknown' && r['Brand'] !== 'Other' && r['Brand'].trim() !== '') ? r['Brand'] : detectBrand(r['SKU']||r['Item Name']||'');
     if (!map[brand]) map[brand] = {add:0, rem:0};
-    const qty = parseFloat(r['Quantity']) || 0;
+    const qty = parseFloat(r['Qty']) || 0;
     if (qty > 0) map[brand].add += qty;
     else         map[brand].rem += Math.abs(qty);
   });
@@ -581,10 +581,15 @@ function updateBrandTable() {
 }
 
 function detectBrand(str) {
-  const s = str.toUpperCase();
-  if (s.startsWith('MM')) return 'Man Matters';
-  if (s.startsWith('BB')) return 'Be Bodywise';
-  if (s.startsWith('LJ')) return 'Little Joys';
+  const s = (str||'').toUpperCase();
+  // SKU prefix pattern: MWMM = Man Matters, MWBB/MWBW = Be Bodywise, MWLJ = Little Joys
+  if (s.includes('MWMM') || s.startsWith('MM')) return 'Man Matters';
+  if (s.includes('MWBB') || s.includes('MWBW') || s.startsWith('BB') || s.startsWith('BW')) return 'Be Bodywise';
+  if (s.includes('MWLJ') || s.startsWith('LJ')) return 'Little Joys';
+  // Item name hints
+  if (s.includes('MAN MATTERS') || s.includes(' MM ')) return 'Man Matters';
+  if (s.includes('BEBODYWISE') || s.includes('BE BODYWISE') || s.includes('BODYWISE')) return 'Be Bodywise';
+  if (s.includes('LITTLE JOYS')) return 'Little Joys';
   return 'Other';
 }
 
@@ -593,8 +598,8 @@ function detectBrand(str) {
 // ═══════════════════════════
 function updateProhibited() {
   const prohibRows = allRows.filter(r => {
-    const inv = (r['Inventory Type']||'').toLowerCase();
-    const qty = parseFloat(r['Quantity'])||0;
+    const inv = (r['Inv Type']||'').toLowerCase();
+    const qty = parseFloat(r['Qty'])||0;
     return inv.includes('bad') && qty < 0;
   });
 
@@ -608,10 +613,10 @@ function updateProhibited() {
   }
 
   document.getElementById('proh-tbody').innerHTML = prohibRows.slice(0,50).map(r => {
-    const qty = parseFloat(r['Quantity'])||0;
+    const qty = parseFloat(r['Qty'])||0;
     return `<tr class="proh-row">
       <td style="font-size:12px">${esc(r['Facility']||'—')}</td>
-      <td class="mono">${esc(r['SKU Code']||'—')}</td>
+      <td class="mono">${esc(r['SKU']||'—')}</td>
       <td class="mono" style="font-size:11px">${esc(r['Batch']||'—')}</td>
       <td class="num qty-neg">${fmt(qty)}</td>
       <td><span class="proh-status">⚠ Pending Review</span></td>
@@ -637,19 +642,19 @@ function renderTable() {
   const page  = filteredRows.slice(start, start+ROWS_PER_PAGE);
 
   tbody.innerHTML = page.map(r => {
-    const qty = parseFloat(r['Quantity'])||0;
-    const inv = (r['Inventory Type']||'').toLowerCase();
+    const qty = parseFloat(r['Qty'])||0;
+    const inv = (r['Inv Type']||'').toLowerCase();
     const qcls = qty>0?'qty-pos':qty<0?'qty-neg':'qty-zero';
     return `<tr>
       <td style="font-size:11.5px;white-space:nowrap">${esc(fmtDate(r['Date']||r['Email Date']||r['Created']||''))}</td>
       <td style="font-size:12px">${esc(r['Facility']||'—')}</td>
-      <td class="mono">${esc(r['SKU Code']||'—')}</td>
+      <td class="mono">${esc(r['SKU']||'—')}</td>
       <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r['Item Name']||'')}">${esc(r['Item Name']||'—')}</td>
       <td class="mono" style="font-size:11px">${esc(r['Batch']||'—')}</td>
-      <td style="font-size:12px">${esc(r['Adjustment Type']||'—')}</td>
+      <td style="font-size:12px">${esc(r['Type']||'—')}</td>
       <td><span class="badge ${inv.includes('good')?'badge-good':'badge-bad'}">${inv.includes('good')?'Good ✓':'Bad ⚠'}</span></td>
       <td class="num ${qcls}">${qty>=0?'+':''}${fmt(qty)}</td>
-      <td class="num" style="color:var(--gray-400)">${esc(String(r['Old Quantity']||'—'))}</td>
+      <td class="num" style="color:var(--gray-400)">${esc(String(r['Old Qty']||'—'))}</td>
       <td style="font-size:12px">${esc(r['Username']||'—')}</td>
       <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--gray-400)" title="${esc(r['Remarks']||'')}">${esc(r['Remarks']||'')}</td>
     </tr>`;
@@ -692,7 +697,7 @@ document.querySelectorAll('th[data-col]').forEach(th => {
     sortCol = col;
     document.querySelectorAll('th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
     th.classList.add(sortAsc?'sort-asc':'sort-desc');
-    const nums = ['Quantity','Old Quantity'];
+    const nums = ['Qty','Old Qty'];
     filteredRows.sort((a,b)=>{
       let va=a[col]??'', vb=b[col]??'';
       if(nums.includes(col)){va=parseFloat(va)||0;vb=parseFloat(vb)||0;return sortAsc?va-vb:vb-va;}
@@ -735,8 +740,8 @@ document.getElementById('btn-refresh').addEventListener('click', () => loadData(
 // ═══════════════════════════
 document.getElementById('btn-download').addEventListener('click', () => {
   if (!filteredRows.length) return;
-  const headers = ['Date','Facility','SKU Code','Item Name','Batch','Adjustment Type','Inventory Type','Quantity','Old Quantity','Username','Remarks'];
-  const keys    = ['Date','Facility','SKU Code','Item Name','Batch','Adjustment Type','Inventory Type','Quantity','Old Quantity','Username','Remarks'];
+  const headers = ['Date','Facility','SKU','Item Name','Batch','Type','Inv Type','Quantity','Old Qty','Username','Remarks'];
+  const keys    = ['Date','Facility','SKU','Item Name','Batch','Type','Inv Type','Quantity','Old Qty','Username','Remarks'];
   const csv = [headers.join(','), ...filteredRows.map(r =>
     keys.map(k => '"'+(String(r[k]||'').replace(/"/g,'""'))+'"').join(',')
   )].join('\n');
