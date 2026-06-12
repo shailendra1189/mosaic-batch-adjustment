@@ -434,10 +434,6 @@ async function loadData() {
 
     showSpinner('Fetching data from Google Sheets…');
     const result = await jsonp(params);
-    dbg('API error: ' + (result.error||'none'));
-    dbg('headers: ' + JSON.stringify(result.headers));
-    dbg('row count: ' + (result.rows||[]).length);
-    if (result.rows && result.rows[0]) dbg('first row: ' + JSON.stringify(result.rows[0]));
     if (!result.ok) throw new Error(result.error || 'API error');
 
     const headers = result.headers || [];
@@ -446,10 +442,6 @@ async function loadData() {
       headers.forEach((h,i) => { obj[h] = (row[i] != null) ? row[i] : ''; });
       return obj;
     });
-    dbg('allRows[0]: ' + JSON.stringify(allRows[0]));
-    dbg('Qty sample: ' + allRows.slice(0,5).map(r=>r['Qty']).join(', '));
-    dbg('Inv Type sample: ' + allRows.slice(0,5).map(r=>r['Inv Type']).join(', '));
-    dbg('Brand sample: ' + allRows.slice(0,5).map(r=>r['Brand']).join(', '));
 
     populateFacilityFilter();
     populateAdjTypeFilter();
